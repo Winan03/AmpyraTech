@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafyraShield</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h2 { margin: 0; font-size: 2em; }
+        .card p { margin: 5px 0; color: #666; }
+        .status { text-align: center; margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SafyraShield - Monitoreo IoT</h1>
+        <div style="display: flex; justify-content: space-around;">
+            <div class="card">
+                <h2>{{ irms }} A</h2>
+                <p>Corriente Irms</p>
+            </div>
+            <div class="card">
+                <h2>{{ power }} W</h2>
+                <p>Potencia</p>
+            </div>
+        </div>
+        <div class="status">Estado de Conexión: {{ connection_status }}</div>
+    </div>
+</body>
+</html>
