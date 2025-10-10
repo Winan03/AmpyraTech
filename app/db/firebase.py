@@ -2,34 +2,54 @@ import firebase_admin
 from firebase_admin import credentials, db
 from dotenv import load_dotenv
 import os
+import json # NECESARIO para convertir la cadena JSON de Vercel
 from typing import List, Dict
 from datetime import datetime
 
 load_dotenv()
 
-# Inicializar Firebase
-cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+# ======================================================================
+# INICIALIZACIÓN DE FIREBASE (CORREGIDO PARA VERCEL)
+# ======================================================================
+
+# Leemos las variables de entorno que están configuradas en Vercel
+cred_json_content = os.getenv("FIREBASE_PRIVATE_KEY_JSON")
 database_url = os.getenv("FIREBASE_DATABASE_URL")
 
-if not cred_path or not database_url:
-    raise ValueError("Missing Firebase credentials or database URL in .env")
+if not cred_json_content or not database_url:
+    # Este mensaje de error aparecerá si no se configuraron correctamente las variables en VercEL.
+    raise ValueError("ERROR FATAL: La variable FIREBASE_PRIVATE_KEY_JSON o DATABASE_URL no está configurada en el entorno de Vercel.")
 
 if not firebase_admin._apps:
     try:
-        cred = credentials.Certificate(cred_path)
+        # 1. Convertir la cadena de texto JSON (de la variable de entorno) a un diccionario Python
+        service_account_info = json.loads(cred_json_content)
+        
+        # 2. Inicializar Firebase usando el diccionario de información (en lugar de buscar un archivo)
+        cred = credentials.Certificate(service_account_info)
+        
         firebase_admin.initialize_app(cred, {
             'databaseURL': database_url
         })
         print("Firebase initialized successfully")
     except Exception as e:
+        # Esto captura errores si el JSON está mal copiado/formateado o si las credenciales son incorrectas
         raise Exception(f"Failed to initialize Firebase: {str(e)}")
+
+# ======================================================================
+# REGLAS DE NEGOCIO Y UMBRALES (Se mantienen)
+# ======================================================================
 
 # IDs de los 3 sensores según el código Arduino
 SENSOR_IDS = ["LAB-PC-01", "LAB-PC-02", "LAB-PC-03"]
 
 # Umbral de sobrecarga (10% sobre 10A = 11A según tu Project Charter)
-UMBRAL_CORRIENTE = 11.0  # Amperios
+UMBRAL_CORRIENTE = 11.0  # Amperios (Límite físico de la extensión)
 UMBRAL_POTENCIA = 2420.0  # Watts (11A * 220V)
+
+# ======================================================================
+# FUNCIONES DE LECTURA (Se mantienen)
+# ======================================================================
 
 def get_current_data() -> dict:
     """
