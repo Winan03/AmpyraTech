@@ -3,30 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafyraShield</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        .card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .card h2 { margin: 0; font-size: 2em; }
-        .card p { margin: 5px 0; color: #666; }
-        .status { text-align: center; margin-top: 20px; font-weight: bold; }
-    </style>
+    <title>SafyraShield - Monitoreo IoT</title>
+    <link rel="stylesheet" href="/static/css/index.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>SafyraShield - Monitoreo IoT</h1>
-        <div style="display: flex; justify-content: space-around;">
-            <div class="card">
-                <h2>{{ irms }} A</h2>
-                <p>Corriente Irms</p>
+        <header class="header">
+            <h1>SAFYRASHIELD - MONITOREO IOT</h1>
+            <div class="status connected" id="connection-status">
+                <span class="status-indicator"></span>
+                Conectado
             </div>
-            <div class="card">
-                <h2>{{ power }} W</h2>
-                <p>Potencia</p>
+        </header>
+
+        <!-- Tarjetas de sensores -->
+        <div class="sensors-grid">
+            <!-- Sensor 1 -->
+            <div class="sensor-card" id="sensor-LAB-PC-01">
+                <div class="sensor-header">
+                    <h3>LAB-PC-01</h3>
+                    <span class="sensor-status">●</span>
+                </div>
+                <div class="sensor-metrics">
+                    <div class="metric">
+                        <span class="metric-value" id="irms-LAB-PC-01">0.0 A</span>
+                        <span class="metric-label">Corriente</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value" id="power-LAB-PC-01">0.0 W</span>
+                        <span class="metric-label">Potencia</span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-LAB-PC-01"></div>
+                </div>
+                <span class="threshold-label">Umbral: 11.0 A</span>
+            </div>
+
+            <!-- Sensor 2 -->
+            <div class="sensor-card" id="sensor-LAB-PC-02">
+                <div class="sensor-header">
+                    <h3>LAB-PC-02</h3>
+                    <span class="sensor-status">●</span>
+                </div>
+                <div class="sensor-metrics">
+                    <div class="metric">
+                        <span class="metric-value" id="irms-LAB-PC-02">0.0 A</span>
+                        <span class="metric-label">Corriente</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value" id="power-LAB-PC-02">0.0 W</span>
+                        <span class="metric-label">Potencia</span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-LAB-PC-02"></div>
+                </div>
+                <span class="threshold-label">Umbral: 11.0 A</span>
+            </div>
+
+            <!-- Sensor 3 -->
+            <div class="sensor-card" id="sensor-LAB-PC-03">
+                <div class="sensor-header">
+                    <h3>LAB-PC-03</h3>
+                    <span class="sensor-status">●</span>
+                </div>
+                <div class="sensor-metrics">
+                    <div class="metric">
+                        <span class="metric-value" id="irms-LAB-PC-03">0.0 A</span>
+                        <span class="metric-label">Corriente</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value" id="power-LAB-PC-03">0.0 W</span>
+                        <span class="metric-label">Potencia</span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-LAB-PC-03"></div>
+                </div>
+                <span class="threshold-label">Umbral: 11.0 A</span>
             </div>
         </div>
-        <div class="status">Estado de Conexión: {{ connection_status }}</div>
+
+        <!-- Gráfico de corriente en tiempo real -->
+        <div class="chart-container">
+            <h2>Corriente en Tiempo Real</h2>
+            <canvas id="currentChart"></canvas>
+        </div>
+
+        <div class="last-update" id="last-update">
+            Última actualización: --:--:--
+        </div>
     </div>
+
+    <script src="/static/js/index.js"></script>
 </body>
 </html>
