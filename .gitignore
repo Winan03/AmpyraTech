@@ -1,12 +1,12 @@
-# Entorno virtual
+# Contenido para el archivo .gitignore
+# Ambientes virtuales
 venv/
-
-# Variables de entorno
-.env
-
-# Credenciales Firebase
-Safyra_Shield_Firebase.json
-
-# Archivos temporales de Python
-__pycache__/
 *.pyc
+
+# Directorios de caché y log
+__pycache__/
+*.log
+
+# Archivos de credenciales (MUY IMPORTANTE)
+.env
+Safyra_Shield_Firebase.json
