@@ -2,7 +2,6 @@ import firebase_admin
 from firebase_admin import credentials, db
 from dotenv import load_dotenv
 import os
-from app.models.data import Data, SensorData
 from typing import List, Dict
 from datetime import datetime
 
