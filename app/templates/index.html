@@ -3,100 +3,1802 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafyraShield - Monitoreo IoT</title>
-    <link rel="stylesheet" href="/static/css/index.css">
+    <title>SafyraShield - Monitor Inteligente Premium</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.4.0/chartjs-plugin-annotation.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Modo Oscuro (Predeterminado) */
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151932;
+            --bg-tertiary: #1e2343;
+            --bg-card: linear-gradient(145deg, #151932 0%, #1e2343 100%);
+            
+            --text-primary: #ffffff;
+            --text-secondary: #a8b2d1;
+            --text-muted: #6b7785;
+            
+            --accent-primary: #00f5ff;
+            --accent-secondary: #ff006e;
+            --accent-success: #00ff88;
+            --accent-warning: #ffd60a;
+            --accent-danger: #ff0055;
+            
+            --shadow-glow: 0 8px 32px rgba(0, 245, 255, 0.15);
+            --shadow-intense: 0 0 40px rgba(0, 245, 255, 0.4);
+            
+            --border-color: rgba(255, 255, 255, 0.1);
+            --border-glow: rgba(0, 245, 255, 0.5);
+        }
+
+        [data-theme="light"] {
+            /* Modo Claro */
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e8ecf1;
+            --bg-card: linear-gradient(145deg, #ffffff 0%, #f5f7fa 100%);
+            
+            --text-primary: #1a1c23;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            
+            --accent-primary: #0066cc;
+            --accent-secondary: #d63384;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            
+            --shadow-glow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --shadow-intense: 0 0 40px rgba(0, 102, 204, 0.2);
+            
+            --border-color: rgba(0, 0, 0, 0.1);
+            --border-glow: rgba(0, 102, 204, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 245, 255, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 0, 110, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============================================
+           HEADER PREMIUM
+           ============================================ */
+        .header {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 30px 40px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-glow);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            animation: slideDown 0.6s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-icon {
+            font-size: 3em;
+            animation: rotate360 20s linear infinite, pulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px var(--accent-primary));
+        }
+
+        @keyframes rotate360 {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .logo-text h1 {
+            font-size: 2.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+            text-shadow: 0 0 30px rgba(0, 245, 255, 0.5);
+        }
+
+        .logo-text p {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .theme-toggle, .nav-btn {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            padding: 12px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.95em;
+        }
+
+        .theme-toggle:hover, .nav-btn:hover {
+            border-color: var(--border-glow);
+            box-shadow: var(--shadow-intense);
+            transform: translateY(-2px);
+        }
+
+        /* --- ¡NUEVO CSS! --- */
+        .nav-btn.active-sound {
+            background: var(--accent-success);
+            color: var(--bg-primary); /* Texto oscuro sobre fondo claro */
+            border-color: var(--accent-success);
+            font-weight: 700;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        /* --- FIN NUEVO CSS --- */
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1em;
+            box-shadow: var(--shadow-glow);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-badge.connected {
+            background: linear-gradient(135deg, var(--accent-success), #00d976);
+            color: #0a0e27;
+        }
+
+        .status-badge.disconnected {
+            background: linear-gradient(135deg, var(--accent-danger), #c0392b);
+            color: white;
+        }
+
+        .status-badge.loading {
+            background: linear-gradient(135deg, var(--accent-warning), #f39c12);
+            color: #0a0e27;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            animation: pulse-dot 2s infinite;
+            box-shadow: 0 0 15px white;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.7; }
+        }
+
+        /* ============================================
+           TARJETAS DE RESUMEN
+           ============================================ */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 28px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: var(--shadow-glow);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
+            transition: width 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-intense);
+            border-color: var(--border-glow);
+        }
+
+        .stat-card:hover::before {
+            width: 100%;
+            opacity: 0.1;
+        }
+
+        .stat-card.warning {
+            border-color: var(--accent-danger);
+            animation: pulse-warning 2s infinite;
+        }
+
+        @keyframes pulse-warning {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); }
+            50% { box-shadow: 0 0 20px 10px rgba(255, 0, 85, 0); }
+        }
+
+        .stat-icon {
+            font-size: 3.5em;
+            filter: drop-shadow(0 0 10px currentColor);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .stat-info h3 {
+            color: var(--text-muted);
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2.2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.warning .stat-value {
+            background: linear-gradient(135deg, var(--accent-danger), var(--accent-warning));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ============================================
+           TARJETAS DE SENSORES
+           ============================================ */
+        .sensors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 28px;
+            margin-bottom: 30px;
+            animation: fadeInUp 1s ease;
+        }
+
+        .sensor-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: var(--shadow-glow);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sensor-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 245, 255, 0.1), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s;
+            pointer-events: none; /* Evita bloquear clics en el modal */
+        }
+
+        .sensor-card:hover {
+            transform: translateY(-10px) scale(1.03);
+            box-shadow: var(--shadow-intense);
+            border-color: var(--border-glow);
+        }
+
+        .sensor-card:hover::after {
+            opacity: 1;
+            animation: rotate 4s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .sensor-card.overload {
+            border-color: var(--accent-danger);
+            animation: shake 0.5s infinite, pulse-warning 2s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .sensor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .sensor-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .device-icon-large {
+            font-size: 3em;
+            animation: bounce 2s infinite;
+            filter: drop-shadow(0 0 15px currentColor);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .sensor-card.overload .device-icon-large {
+            animation: shake 0.5s infinite;
+            color: var(--accent-danger);
+        }
+
+        .device-info-box {
+            background: var(--bg-tertiary);
+            padding: 18px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .device-info-box:hover {
+            border-color: var(--border-glow);
+            transform: scale(1.02);
+        }
+
+        .device-type {
+            font-weight: 700;
+            font-size: 1.15em;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .device-description {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-box {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .metric-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .metric-icon {
+            font-size: 2em;
+            color: var(--accent-primary);
+            filter: drop-shadow(0 0 8px var(--accent-primary));
+        }
+
+        .sensor-card.overload .metric-icon {
+            color: var(--accent-danger);
+            animation: pulse 1s infinite;
+        }
+
+        .metric-content h4 {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: 1.6em;
+            font-weight: 800;
+            color: var(--accent-primary);
+            text-shadow: 0 0 10px var(--accent-primary);
+        }
+
+        .sensor-card.overload .metric-value {
+            color: var(--accent-danger);
+            text-shadow: 0 0 15px var(--accent-danger);
+        }
+
+        .progress-container {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-success));
+            border-radius: 20px;
+            transition: width 0.6s ease;
+            box-shadow: 0 0 15px var(--accent-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .sensor-card.overload .progress-fill {
+            background: linear-gradient(90deg, var(--accent-danger), var(--accent-warning));
+            box-shadow: 0 0 20px var(--accent-danger);
+            animation: pulse 1s infinite;
+        }
+
+        .threshold-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .btn-configure {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-weight: 700;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 245, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-configure::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-configure:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-configure:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 245, 255, 0.5);
+        }
+
+        /* ============================================
+           GRÁFICO
+           ============================================ */
+        .chart-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 36px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-glow);
+            animation: fadeInUp 1.2s ease;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.8em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        /* ============================================
+           ALERTAS FLOTANTES
+           ============================================ */
+        .alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 420px;
+        }
+
+        .alert-box {
+            background: var(--bg-card);
+            border-left: 5px solid var(--accent-danger);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideInRight 0.5s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(500px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .alert-icon {
+            font-size: 2.5em;
+            animation: shake 0.6s infinite;
+            color: var(--accent-danger);
+            filter: drop-shadow(0 0 15px var(--accent-danger));
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 800;
+            font-size: 1.2em;
+            color: var(--accent-danger);
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px var(--accent-danger);
+        }
+
+        .alert-details {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .alert-close {
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+
+        .alert-close:hover {
+            color: var(--accent-danger);
+            transform: rotate(90deg);
+        }
+
+        /* ============================================
+           MODAL
+           ============================================ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 550px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: zoomIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 28px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.6em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 2.5em;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close-btn:hover {
+            color: var(--accent-danger);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1.1em;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+        
+        /* Arreglo para modo claro en input de números */
+        [data-theme="light"] .form-group input {
+            color-scheme: light;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--border-glow);
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+        }
+
+        .calculated-value {
+            font-size: 1.4em;
+            font-weight: 800;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            text-align: center;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-info {
+            background: rgba(0, 245, 255, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--accent-primary);
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 16px;
+            padding: 28px;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .btn-cancel, .btn-save {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-cancel:hover {
+            background: var(--bg-secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 245, 255, 0.3);
+        }
+
+        .btn-save:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 245, 255, 0.5);
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 30px;
+            border-top: 2px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .footer p {
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+            
+            .header { padding: 20px; }
+            
+            .logo-text h1 { font-size: 1.8em; }
+            
+            .header-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .theme-toggle, .status-badge, .nav-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sensors-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-header {
+                flex-direction: column;
+            }
+            
+            .alert-container {
+                left: 10px;
+                right: 10px;
+                max-width: calc(100% - 20px);
+            }
+        }
+    </style>
 </head>
-<body>
+<body data-theme="dark">
+    <div id="alert-container" class="alert-container"></div>
+
     <div class="container">
         <header class="header">
-            <h1>SAFYRASHIELD - MONITOREO IOT</h1>
-            <div class="status connected" id="connection-status">
-                <span class="status-indicator"></span>
-                Conectado
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">⚡</div>
+                    <div class="logo-text">
+                        <h1>SafyraShield</h1>
+                        <p>Monitor Inteligente de Consumo Eléctrico</p>
+                    </div>
+                </div>
+                
+                <div class="header-controls">
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <span id="theme-icon">🌙</span>
+                        <span id="theme-text">Modo Oscuro</span>
+                    </button>
+                    
+                    <a href="/history" class="nav-btn">
+                        📋 Historial
+                    </a>
+                
+                    <a href="/alerts" class="nav-btn">
+                        ⚠️ Registro de Alertas
+                    </a>
+                    <button class="nav-btn" id="sound-toggle-btn" onclick="toggleSound()">
+                        🔊 Sonido Desactivado
+                    </button>
+                    
+                    <button class="nav-btn" onclick="logout()">
+                        🔒 Cerrar Sesión
+                    </button>
+                    
+                    <div class="status-badge loading" id="connection-status">
+                        <span class="status-dot"></span>
+                        <span>Cargando...</span>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <!-- Tarjetas de sensores -->
+        <div class="summary-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🔌</div>
+                <div class="stat-info">
+                    <h3>Sensores Activos</h3>
+                    <div class="stat-value" id="active-sensors">0</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-info">
+                    <h3>Consumo Total</h3>
+                    <div class="stat-value" id="total-consumption">0 W</div>
+                </div>
+            </div>
+            
+            <div class="stat-card" id="summary-alerts">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-info">
+                    <h3>Alertas Activas</h3>
+                    <div class="stat-value" id="overload-count">0</div>
+                </div>
+            </div>
+        </div>
+
         <div class="sensors-grid">
-            <!-- Sensor 1 -->
             <div class="sensor-card" id="sensor-LAB-PC-01">
                 <div class="sensor-header">
-                    <h3>LAB-PC-01</h3>
-                    <span class="sensor-status">●</span>
-                </div>
-                <div class="sensor-metrics">
-                    <div class="metric">
-                        <span class="metric-value" id="irms-LAB-PC-01">0.0 A</span>
-                        <span class="metric-label">Corriente</span>
+                    <div class="sensor-title">
+                        <span>📍</span>
+                        <span>LAB-PC-01</span>
                     </div>
-                    <div class="metric">
-                        <span class="metric-value" id="power-LAB-PC-01">0.0 W</span>
-                        <span class="metric-label">Potencia</span>
+                    <div class="device-icon-large" id="device-icon-LAB-PC-01">🔌</div>
+                </div>
+                
+                <div class="device-info-box" id="device-info-LAB-PC-01">
+                    <span class="device-type">Sin carga</span>
+                    <span class="device-description">No hay dispositivos conectados</span>
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-icon">⚡</span>
+                        <div class="metric-content">
+                            <h4>Corriente</h4>
+                            <div class="metric-value" id="irms-LAB-PC-01">0.0 A</div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-box">
+                        <span class="metric-icon">💡</span>
+                        <div class="metric-content">
+                            <h4>Potencia</h4>
+                            <div class="metric-value" id="power-LAB-PC-01">0 W</div>
+                        </div>
                     </div>
                 </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-LAB-PC-01"></div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-LAB-PC-01" style="width: 0%"></div>
+                    </div>
+                    <span class="threshold-label" id="threshold-LAB-PC-01">Límite: -- A</span>
                 </div>
-                <span class="threshold-label">Umbral: 11.0 A</span>
+                
+                <button class="btn-configure" onclick="openThresholdModal('LAB-PC-01')">
+                    ⚙️ Configurar Umbral
+                </button>
             </div>
 
-            <!-- Sensor 2 -->
             <div class="sensor-card" id="sensor-LAB-PC-02">
                 <div class="sensor-header">
-                    <h3>LAB-PC-02</h3>
-                    <span class="sensor-status">●</span>
-                </div>
-                <div class="sensor-metrics">
-                    <div class="metric">
-                        <span class="metric-value" id="irms-LAB-PC-02">0.0 A</span>
-                        <span class="metric-label">Corriente</span>
+                    <div class="sensor-title">
+                        <span>📍</span>
+                        <span>LAB-PC-02</span>
                     </div>
-                    <div class="metric">
-                        <span class="metric-value" id="power-LAB-PC-02">0.0 W</span>
-                        <span class="metric-label">Potencia</span>
+                    <div class="device-icon-large" id="device-icon-LAB-PC-02">🔌</div>
+                </div>
+                
+                <div class="device-info-box" id="device-info-LAB-PC-02">
+                    <span class="device-type">Sin carga</span>
+                    <span class="device-description">No hay dispositivos conectados</span>
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-icon">⚡</span>
+                        <div class="metric-content">
+                            <h4>Corriente</h4>
+                            <div class="metric-value" id="irms-LAB-PC-02">0.0 A</div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-box">
+                        <span class="metric-icon">💡</span>
+                        <div class="metric-content">
+                            <h4>Potencia</h4>
+                            <div class="metric-value" id="power-LAB-PC-02">0 W</div>
+                        </div>
                     </div>
                 </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-LAB-PC-02"></div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-LAB-PC-02" style="width: 0%"></div>
+                    </div>
+                    <span class="threshold-label" id="threshold-LAB-PC-02">Límite: -- A</span>
                 </div>
-                <span class="threshold-label">Umbral: 11.0 A</span>
+                
+                <button class="btn-configure" onclick="openThresholdModal('LAB-PC-02')">
+                    ⚙️ Configurar Umbral
+                </button>
             </div>
 
-            <!-- Sensor 3 -->
             <div class="sensor-card" id="sensor-LAB-PC-03">
                 <div class="sensor-header">
-                    <h3>LAB-PC-03</h3>
-                    <span class="sensor-status">●</span>
-                </div>
-                <div class="sensor-metrics">
-                    <div class="metric">
-                        <span class="metric-value" id="irms-LAB-PC-03">0.0 A</span>
-                        <span class="metric-label">Corriente</span>
+                    <div class="sensor-title">
+                        <span>📍</span>
+                        <span>LAB-PC-03</span>
                     </div>
-                    <div class="metric">
-                        <span class="metric-value" id="power-LAB-PC-03">0.0 W</span>
-                        <span class="metric-label">Potencia</span>
+                    <div class="device-icon-large" id="device-icon-LAB-PC-03">🔌</div>
+                </div>
+                
+                <div class="device-info-box" id="device-info-LAB-PC-03">
+                    <span class="device-type">Sin carga</span>
+                    <span class="device-description">No hay dispositivos conectados</span>
+                </div>
+                
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-icon">⚡</span>
+                        <div class="metric-content">
+                            <h4>Corriente</h4>
+                            <div class="metric-value" id="irms-LAB-PC-03">0.0 A</div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-box">
+                        <span class="metric-icon">💡</span>
+                        <div class="metric-content">
+                            <h4>Potencia</h4>
+                            <div class="metric-value" id="power-LAB-PC-03">0 W</div>
+                        </div>
                     </div>
                 </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-LAB-PC-03"></div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-LAB-PC-03" style="width: 0%"></div>
+                    </div>
+                    <span class="threshold-label" id="threshold-LAB-PC-03">Límite: -- A</span>
                 </div>
-                <span class="threshold-label">Umbral: 11.0 A</span>
+                
+                <button class="btn-configure" onclick="openThresholdModal('LAB-PC-03')">
+                    ⚙️ Configurar Umbral
+                </button>
             </div>
         </div>
 
-        <!-- Gráfico de corriente en tiempo real -->
-        <div class="chart-container">
-            <h2>Corriente en Tiempo Real</h2>
-            <canvas id="currentChart"></canvas>
+        <div class="chart-section">
+            <div class="chart-header">
+                <h2 class="chart-title">📊 Historial de Consumo en Tiempo Real</h2>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="currentChart"></canvas>
+            </div>
         </div>
 
-        <div class="last-update" id="last-update">
-            Última actualización: --:--:--
+        <footer class="footer">
+            <p id="last-update">Última actualización: --:--:--</p>
+        </footer>
+    </div>
+
+    <div class="modal" id="threshold-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">⚙️ Configurar Umbral</h3>
+                <button class="modal-close-btn" onclick="closeThresholdModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Sensor: <strong id="modal-sensor-id" style="color: var(--text-primary);">--</strong>
+                </p>
+                
+                <div class="form-group">
+                    <label>Límite de Corriente (A)</label>
+                    <input type="number" id="input-corriente" step="0.1" min="1" max="15" value="11.0" oninput="actualizarPotenciaCalculada()">
+                </div>
+                
+                <div class="form-group">
+                    <label>Límite de Potencia (W) - Referencial</label>
+                    <div class="calculated-value" id="modal-potencia-calculada">2420 W</div>
+                    <small style="color: var(--text-muted); display: block; margin-top: 8px;">
+                        Este valor se calcula automáticamente como 220V × Corriente
+                    </small>
+                </div>
+                
+                <div class="modal-info">
+                    💡 Ajusta el límite de corriente según los dispositivos conectados. La potencia se calculará automáticamente.
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeThresholdModal()">Cancelar</button>
+                <button class="btn-save" onclick="saveThreshold()">Guardar</button>
+            </div>
         </div>
     </div>
 
-    <script src="/static/js/index.js"></script>
+    <script>
+        console.log("SafyraShield Premium v3.2 - Dashboard Corregido");
+
+        // ======================================================================
+        // SEGURIDAD Y AUTENTICACIÓN
+        // ======================================================================
+        
+        const token = localStorage.getItem('safyraToken');
+        if (!token) {
+            console.warn("⚠️ No hay token de autenticación. Redirigiendo a login...");
+            window.location.href = '/login';
+        }
+
+        const AUTH_HEADER = { 'Authorization': `Bearer ${token}` };
+
+        function logout() {
+            localStorage.removeItem('safyraToken');
+            window.location.href = '/login';
+        }
+
+        // ======================================================================
+        // CONFIGURACIÓN DEL DASHBOARD
+        // ======================================================================
+        let chart = null;
+        const MAX_DATA_POINTS = 20;
+        const SENSOR_IDS = ["LAB-PC-01", "LAB-PC-02", "LAB-PC-03"];
+        let currentSensorForThreshold = null;
+        let activeAlerts = {};
+
+        // ============================================
+        // ¡NUEVO! Sistema de Alerta Sonora (HU-006)
+        // ============================================
+        let soundEnabled = false; // Por defecto, desactivado
+        const alertSound = new Audio('/static/sound/alert.mp3');
+        alertSound.preload = 'auto'; // Carga el audio al inicio
+        // ============================================
+
+        const chartData = {
+            labels: [],
+            datasets: [
+                {
+                    label: 'LAB-PC-01',
+                    data: [],
+                    borderColor: '#00f5ff',
+                    backgroundColor: 'rgba(0, 245, 255, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3
+                },
+                {
+                    label: 'LAB-PC-02',
+                    data: [],
+                    borderColor: '#00ff88',
+                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3
+                },
+                {
+                    label: 'LAB-PC-03',
+                    data: [],
+                    borderColor: '#ff006e',
+                    backgroundColor: 'rgba(255, 0, 110, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3
+                }
+            ]
+        };
+
+        // ======================================================================
+        // SISTEMA DE TEMA
+        // ======================================================================
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            
+            if (newTheme === 'light') {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Modo Claro';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Modo Oscuro';
+            }
+            
+            localStorage.setItem('theme', newTheme);
+            
+            if (chart) {
+                updateChartTheme();
+            }
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.body.setAttribute('data-theme', savedTheme);
+            
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            if (savedTheme === 'light') {
+                if(themeIcon) themeIcon.textContent = '☀️';
+                if(themeText) themeText.textContent = 'Modo Claro';
+            } else {
+                if(themeIcon) themeIcon.textContent = '🌙';
+                if(themeText) themeText.textContent = 'Modo Oscuro';
+            }
+        }
+
+        // ======================================================================
+        // ¡NUEVO! SISTEMA DE SONIDO (HU-006)
+        // ======================================================================
+        function toggleSound() {
+            soundEnabled = !soundEnabled; // Invierte el estado (true/false)
+            const soundBtn = document.getElementById('sound-toggle-btn');
+            
+            if (soundEnabled) {
+                soundBtn.innerHTML = '🔈 Sonido Activado';
+                soundBtn.classList.add('active-sound');
+                
+                // Hacemos una carga "manual" la primera vez que el usuario
+                // interactúa, para asegurar que los navegadores lo permitan.
+                alertSound.load(); 
+                try {
+                    alertSound.play();
+                    setTimeout(() => alertSound.pause(), 100); // Pequeño "beep" de confirmación
+                } catch(e) {}
+            } else {
+                soundBtn.innerHTML = '🔊 Sonido Desactivado';
+                soundBtn.classList.remove('active-sound');
+            }
+        }
+
+        // ======================================================================
+        // GRÁFICO
+        // ======================================================================
+        function initChart() {
+            const ctx = document.getElementById('currentChart');
+            if (!ctx) {
+                console.error("No se encontró el canvas del gráfico");
+                return;
+            }
+
+            const theme = document.body.getAttribute('data-theme');
+            const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const textColor = theme === 'dark' ? '#a8b2d1' : '#4a5568';
+
+            chart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                color: textColor,
+                                font: { size: 13, weight: '600' }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            padding: 15,
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#00f5ff',
+                            borderWidth: 2,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    label += context.parsed.y.toFixed(3) + ' A';
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Corriente (A)',
+                                font: { size: 14, weight: 'bold' },
+                                color: textColor
+                            },
+                            ticks: {
+                                color: textColor,
+                                callback: function(value) { return value.toFixed(1) + ' A'; }
+                            },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Tiempo',
+                                font: { size: 14, weight: 'bold' },
+                                color: textColor
+                            },
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        function updateChartTheme() {
+            if (!chart) return;
+            
+            const theme = document.body.getAttribute('data-theme');
+            const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const textColor = theme === 'dark' ? '#a8b2d1' : '#4a5568';
+            
+            chart.options.plugins.legend.labels.color = textColor;
+            chart.options.scales.y.title.color = textColor;
+            chart.options.scales.y.ticks.color = textColor;
+            chart.options.scales.y.grid.color = gridColor;
+            chart.options.scales.x.title.color = textColor;
+            chart.options.scales.x.ticks.color = textColor;
+            chart.options.scales.x.grid.color = gridColor;
+            
+            chart.update('none');
+        }
+
+        function updateChart(timestamp) {
+            if (!chart) return;
+
+            chartData.labels.push(timestamp);
+            
+            if (chartData.labels.length > MAX_DATA_POINTS) {
+                chartData.labels.shift();
+                chartData.datasets.forEach(dataset => {
+                    dataset.data.shift();
+                });
+            }
+            
+            chart.update('none');
+        }
+
+        // ======================================================================
+        // ACTUALIZACIÓN DE SENSORES
+        // ======================================================================
+        function updateSensorCard(sensor) {
+            const card = document.getElementById(`sensor-${sensor.id}`);
+            if (!card) return;
+
+            const deviceIcon = document.getElementById(`device-icon-${sensor.id}`);
+            if(deviceIcon) deviceIcon.textContent = sensor.device.icon;
+
+            const deviceInfo = document.getElementById(`device-info-${sensor.id}`);
+            if(deviceInfo) {
+                deviceInfo.innerHTML = `
+                    <span class="device-type">${sensor.device.type}</span>
+                    <span class="device-description">${sensor.device.description}</span>
+                `;
+            }
+
+            const irmsEl = document.getElementById(`irms-${sensor.id}`);
+            if(irmsEl) irmsEl.textContent = sensor.irms.toFixed(3) + ' A';
+            
+            const powerEl = document.getElementById(`power-${sensor.id}`);
+            if(powerEl) powerEl.textContent = sensor.potencia.toFixed(0) + ' W';
+
+            const thresholdEl = document.getElementById(`threshold-${sensor.id}`);
+            if(thresholdEl) thresholdEl.textContent = `Límite: ${sensor.threshold.corriente.toFixed(1)} A`;
+
+            const progressEl = document.getElementById(`progress-${sensor.id}`);
+            if(progressEl) {
+                const percentage = Math.min((sensor.irms / sensor.threshold.corriente) * 100, 100);
+                progressEl.style.width = percentage + '%';
+            }
+
+            if (sensor.is_overload) {
+                card.classList.add('overload');
+                showOverloadAlert(sensor);
+            } else {
+                card.classList.remove('overload');
+                dismissAlert(sensor.id);
+            }
+
+            const datasetIndex = SENSOR_IDS.indexOf(sensor.id);
+            if (datasetIndex !== -1 && chartData.datasets[datasetIndex]) {
+                const currentLength = chartData.datasets[datasetIndex].data.length;
+                if (currentLength === 0 || currentLength < chartData.labels.length) {
+                    chartData.datasets[datasetIndex].data.push(sensor.irms);
+                } else {
+                    chartData.datasets[datasetIndex].data[currentLength - 1] = sensor.irms;
+                }
+            }
+        }
+
+        // ======================================================================
+        // ALERTAS
+        // ======================================================================
+        function showOverloadAlert(sensor) {
+            const alertId = `alert-${sensor.id}`;
+            
+            if (!activeAlerts[sensor.id]) {
+                activeAlerts[sensor.id] = true;
+
+                // ============================================
+                // ¡MODIFICADO! Reproducir Sonido (HU-006)
+                // ============================================
+                if (soundEnabled) {
+                    alertSound.currentTime = 0; // Reinicia el audio por si ya sonaba
+                    alertSound.play().catch(e => console.warn("El navegador bloqueó la reproducción automática de sonido."));
+                }
+                // ============================================
+
+                const alert = document.createElement('div');
+                alert.id = alertId;
+                alert.className = 'alert-box';
+                alert.innerHTML = `
+                    <span class="alert-icon">⚠️</span>
+                    <div class="alert-content">
+                        <div class="alert-title">¡SOBRECARGA DETECTADA!</div>
+                        <div class="alert-details">
+                            <p><strong>Sensor:</strong> ${sensor.id}</p>
+                            <p><strong>Dispositivo:</strong> ${sensor.device.type}</p>
+                            <p><strong>Consumo:</strong> ${sensor.irms.toFixed(3)} A (Límite: ${sensor.threshold.corriente.toFixed(1)} A)</p>
+                        </div>
+                    </div>
+                    <button onclick="dismissAlert('${sensor.id}')" class="alert-close">✕</button>
+                `;
+                
+                document.getElementById('alert-container').appendChild(alert);
+            }
+        }
+
+        function dismissAlert(sensorId) {
+            const alertId = `alert-${sensorId}`;
+            const alert = document.getElementById(alertId);
+            
+            if (alert) {
+                activeAlerts[sensorId] = false;
+                alert.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => alert.remove(), 300);
+            }
+        }
+
+        // ======================================================================
+        // ACTUALIZACIÓN DE DATOS (MEJORADO)
+        // ======================================================================
+        async function updateData() {
+            try {
+                const response = await fetch('/api/data/current', {
+                    headers: AUTH_HEADER
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        alert("Sesión expirada. Por favor, inicia sesión de nuevo.");
+                        logout();
+                        return;
+                    }
+                    throw new Error(`Error de red: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // ✅ ACTUALIZAR ESTADO DE CONEXIÓN (CORREGIDO)
+                const statusElement = document.getElementById('connection-status');
+                if (statusElement) {
+                    if (data.connected) {
+                        statusElement.innerHTML = `
+                            <span class="status-dot"></span>
+                            <span>Sistema Activo</span>
+                        `;
+                        statusElement.className = 'status-badge connected';
+                    } else {
+                        statusElement.innerHTML = `
+                            <span class="status-dot"></span>
+                            <span>Sin Conexión</span>
+                        `;
+                        statusElement.className = 'status-badge disconnected';
+                    }
+                }
+                
+                updateSummary(data);
+                
+                const now = new Date();
+                const timestamp = now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                // ✅ SIEMPRE actualizar el gráfico, incluso con valores en 0
+                if (data.sensors && Array.isArray(data.sensors)) {
+                    data.sensors.forEach(sensor => {
+                        updateSensorCard(sensor);
+                    });
+                }
+                
+                // ✅ Actualizar gráfico SIEMPRE (incluso con 0)
+                updateChart(timestamp);
+                
+                const lastUpdateEl = document.getElementById('last-update');
+                if(lastUpdateEl) lastUpdateEl.textContent = `Última actualización: ${timestamp}`;
+                
+            } catch (error) {
+                console.error('Error al actualizar datos:', error);
+                
+                const statusElement = document.getElementById('connection-status');
+                if (statusElement) {
+                    statusElement.innerHTML = `
+                        <span class="status-dot"></span>
+                        <span>Error de Conexión</span>
+                    `;
+                    statusElement.className = 'status-badge disconnected';
+                }
+            }
+        }
+
+        function updateSummary(data) {
+            if (!data.sensors) return;
+            
+            const activeSensors = data.sensors.filter(s => s.irms > 0.01).length;
+            const activeSensorsEl = document.getElementById('active-sensors');
+            if(activeSensorsEl) activeSensorsEl.textContent = activeSensors;
+            
+            const totalConsumptionEl = document.getElementById('total-consumption');
+            if(totalConsumptionEl) totalConsumptionEl.textContent = (data.total_consumption || 0).toFixed(0) + ' W';
+            
+            const overloadCount = data.sensors.filter(s => s.is_overload).length;
+            const overloadCountEl = document.getElementById('overload-count');
+            if(overloadCountEl) overloadCountEl.textContent = overloadCount;
+            
+            const alertCard = document.getElementById('summary-alerts');
+            if (alertCard) {
+                if (overloadCount > 0) {
+                    alertCard.classList.add('warning');
+                } else {
+                    alertCard.classList.remove('warning');
+                }
+            }
+        }
+
+        // ======================================================================
+        // MODAL DE CONFIGURACIÓN (CORREGIDO)
+        // ======================================================================
+        function actualizarPotenciaCalculada() {
+            const corrienteInput = document.getElementById('input-corriente');
+            const potenciaCalculada = document.getElementById('modal-potencia-calculada');
+            
+            let corriente = parseFloat(corrienteInput.value);
+            if (isNaN(corriente) || corriente < 0) corriente = 0;
+            
+            const potencia = (corriente * 220).toFixed(0);
+            if(potenciaCalculada) potenciaCalculada.textContent = `${potencia} W`;
+        }
+
+        function openThresholdModal(sensorId) {
+            currentSensorForThreshold = sensorId;
+            
+            fetch('/api/data/current', { headers: AUTH_HEADER })
+                .then(res => {
+                    if (!res.ok) {
+                        if (res.status === 401) logout();
+                        throw new Error('Error al obtener datos');
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (!data.sensors) return;
+                    const sensor = data.sensors.find(s => s.id === sensorId);
+                    if (sensor && sensor.threshold) {
+                        const corrienteInput = document.getElementById('input-corriente');
+                        if(corrienteInput) corrienteInput.value = sensor.threshold.corriente;
+                        actualizarPotenciaCalculada();
+                    }
+                })
+                .catch(err => {
+                    console.error("Error al abrir modal:", err);
+                    alert("Error al cargar datos de umbral. Intente de nuevo.");
+                });
+            
+            const modalSensorIdEl = document.getElementById('modal-sensor-id');
+            if(modalSensorIdEl) modalSensorIdEl.textContent = sensorId;
+            
+            const modalEl = document.getElementById('threshold-modal');
+            if(modalEl) modalEl.classList.add('active');
+        }
+
+        function closeThresholdModal() {
+            const modalEl = document.getElementById('threshold-modal');
+            if(modalEl) modalEl.classList.remove('active');
+            currentSensorForThreshold = null;
+        }
+
+        async function saveThreshold() {
+            if (!currentSensorForThreshold) return;
+            
+            const corrienteInput = document.getElementById('input-corriente');
+            const corriente = parseFloat(corrienteInput.value);
+            
+            if (isNaN(corriente) || corriente <= 0) {
+                alert("Por favor, ingrese un valor de corriente válido.");
+                return;
+            }
+
+            const potencia = (corriente * 220).toFixed(0);
+
+            try {
+                const response = await fetch(`/api/data/threshold/${currentSensorForThreshold}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...AUTH_HEADER
+                    },
+                    body: JSON.stringify({
+                        corriente: corriente,
+                        potencia: parseFloat(potencia)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    alert(`✅ Umbral actualizado para ${currentSensorForThreshold}`);
+                    closeThresholdModal();
+                    updateData();
+                } else {
+                    alert(`❌ Error al actualizar umbral: ${result.detail}`);
+                }
+            } catch (error) {
+                console.error('Error al guardar umbral:', error);
+                alert('❌ Error de conexión al guardar.');
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeThresholdModal();
+            }
+        });
+
+        // ======================================================================
+        // INICIALIZACIÓN
+        // ======================================================================
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log('🚀 SafyraShield Premium v3.2 - Inicializando Dashboard');
+            
+            loadTheme();
+            initChart();
+            updateData();
+            
+            setInterval(updateData, 3000);
+            
+            console.log('✅ Sistema activo - Actualizando cada 3 segundos');
+        });
+    </script>
 </body>
 </html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SafyraShield</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151932;
+            --bg-tertiary: #1e2343;
+            --text-primary: #ffffff;
+            --text-secondary: #a8b2d1;
+            --accent-primary: #00f5ff;
+            --accent-secondary: #ff006e;
+            --shadow-glow: 0 8px 32px rgba(0, 245, 255, 0.15);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --border-glow: rgba(0, 245, 255, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 245, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 0, 110, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(145deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 50px 40px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: var(--shadow-glow);
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            font-size: 4em;
+            animation: pulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px var(--accent-primary));
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .logo-text h1 {
+            font-size: 2.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-top: 15px;
+        }
+
+        .logo-text p {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1em;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--border-glow);
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 245, 255, 0.3);
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 245, 255, 0.5);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: rgba(255, 0, 85, 0.1);
+            border: 1px solid #ff0055;
+            border-radius: 12px;
+            padding: 12px;
+            color: #ff0055;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* --- ESTA SECCIÓN FUE ELIMINADA ---
+        .footer-note {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+        */
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 40px 30px;
+            }
+            
+            .logo-text h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo-section">
+            <div class="logo-icon">⚡</div>
+            <div class="logo-text">
+                <h1>SafyraShield</h1>
+                <p>Iniciar Sesión</p>
+            </div>
+        </div>
+
+        <div class="error-message" id="error-message">
+            ❌ Usuario o contraseña incorrectos
+        </div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    placeholder="Ingrese su usuario"
+                    required
+                    autocomplete="username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Ingrese su contraseña"
+                    required
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <button type="submit" class="btn-login" id="login-btn">
+                🔐 Iniciar Sesión
+            </button>
+        </form>
+
+        </div>
+
+    <script>
+        console.log("SafyraShield - Login Page v1.0");
+
+        // ============================================================
+        // IMPORTANTE: NO verificar token ni redirigir en esta página
+        // ============================================================
+        
+        const loginForm = document.getElementById('login-form');
+        const errorMessage = document.getElementById('error-message');
+        const loginBtn = document.getElementById('login-btn');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Ocultar error previo
+            errorMessage.classList.remove('show');
+            
+            // Deshabilitar botón durante el proceso
+            loginBtn.disabled = true;
+            loginBtn.textContent = '⏳ Iniciando sesión...';
+
+            try {
+                // Crear FormData para OAuth2PasswordRequestForm
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+
+                const response = await fetch('/token', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.access_token) {
+                    // Guardar token en localStorage
+                    localStorage.setItem('safyraToken', data.access_token);
+                    
+                    // Mostrar éxito y redirigir
+                    loginBtn.textContent = '✅ ¡Éxito! Redirigiendo...';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
+                    
+                } else {
+                    // Mostrar error
+                    throw new Error(data.detail || 'Error de autenticación');
+                }
+
+            } catch (error) {
+                console.error('Error de login:', error);
+                
+                // Mostrar mensaje de error
+                errorMessage.textContent = `❌ ${error.message}`;
+                errorMessage.classList.add('show');
+                
+                // Re-habilitar botón
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🔐 Iniciar Sesión';
+            }
+        });
+    </script>
+</body>
+</html>

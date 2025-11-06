@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Configuración - SafyraShield PRO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: linear-gradient(135deg, #0f172a, #1e293b); --card: rgba(30, 41, 59, 0.8); --primary: #3b82f6; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .card { background: var(--card); padding: 40px; border-radius: 24px; width: 100%; max-width: 500px; backdrop-filter: blur(12px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); text-align: center; }
+    .back { color: #60a5fa; margin-bottom: 20px; display: block; }
+    h1 { font-size: 1.8em; margin-bottom: 30px; }
+    label { display: block; text-align: left; margin: 20px 0 8px; font-weight: 500; }
+    input { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 1.1em; }
+    button { background: #10b981; color: white; padding: 14px 32px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; margin-top: 20px; width: 100%; }
+    #msg { margin-top: 15px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a href="/" class="back">Volver</a>
+    <h1>Umbral de Sobrecarga</h1>
+    <label>Límite máximo de corriente (A):</label>
+    <input type="number" step="0.1" id="umbral" value="{{ umbral }}" />
+    <button onclick="save()">Guardar Configuración</button>
+    <p id="msg"></p>
+  </div>
+
+  <script>
+    async function save() {
+      const umbral = document.getElementById('umbral').value;
+      const res = await fetch('/api/data/umbral', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ umbral: parseFloat(umbral) }) });
+      const data = await res.json();
+      const msg = document.getElementById('msg');
+      msg.textContent = data.success ? '¡Guardado!' : 'Error';
+      msg.style.color = data.success ? '#10b981' : '#ef4444';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafyraShield - Historial de Consumo</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Modo Oscuro (Predeterminado) */
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151932;
+            --bg-tertiary: #1e2343;
+            --bg-card: linear-gradient(145deg, #151932 0%, #1e2343 100%);
+            
+            --text-primary: #ffffff;
+            --text-secondary: #a8b2d1;
+            --text-muted: #6b7785;
+            
+            --accent-primary: #00f5ff;
+            --accent-secondary: #ff006e;
+            --accent-success: #00ff88;
+            --accent-warning: #ffd60a;
+            --accent-danger: #ff0055;
+            
+            --shadow-glow: 0 8px 32px rgba(0, 245, 255, 0.15);
+            --shadow-intense: 0 0 40px rgba(0, 245, 255, 0.4);
+            
+            --border-color: rgba(255, 255, 255, 0.1);
+            --border-glow: rgba(0, 245, 255, 0.5);
+        }
+
+        [data-theme="light"] {
+            /* Modo Claro */
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e8ecf1;
+            --bg-card: linear-gradient(145deg, #ffffff 0%, #f5f7fa 100%);
+            
+            --text-primary: #1a1c23;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            
+            --accent-primary: #0066cc;
+            --accent-secondary: #d63384;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            
+            --shadow-glow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --shadow-intense: 0 0 40px rgba(0, 102, 204, 0.2);
+            
+            --border-color: rgba(0, 0, 0, 0.1);
+            --border-glow: rgba(0, 102, 204, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 245, 255, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 0, 110, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============================================
+           HEADER PREMIUM
+           ============================================ */
+        .header {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 30px 40px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-glow);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            animation: slideDown 0.6s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-icon {
+            font-size: 3em;
+            animation: rotate360 20s linear infinite, pulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px var(--accent-primary));
+        }
+
+        @keyframes rotate360 {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .logo-text h1 {
+            font-size: 2.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+            text-shadow: 0 0 30px rgba(0, 245, 255, 0.5);
+        }
+
+        .logo-text p {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .theme-toggle, .nav-btn {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            padding: 12px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.95em;
+        }
+
+        .theme-toggle:hover, .nav-btn:hover {
+            border-color: var(--border-glow);
+            box-shadow: var(--shadow-intense);
+            transform: translateY(-2px);
+        }
+
+        /* ============================================
+           TARJETAS DE RESUMEN
+           ============================================ */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================
+           CONTROLES DE HISTORIAL
+           ============================================ */
+        
+        .history-controls {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-glow);
+            border: 1px solid var(--border-color);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            align-items: flex-end;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        .control-group input,
+        .control-group select,
+        .control-group .btn-control {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1em;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+        }
+        
+        .control-group input[type="datetime-local"] {
+            color-scheme: var(--bg-primary); 
+        }
+
+        [data-theme="light"] .control-group input[type="datetime-local"] {
+            color-scheme: light;
+        }
+        
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: var(--border-glow);
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+        }
+
+        .btn-control {
+            cursor: pointer;
+            font-weight: 700;
+            border: none;
+            color: white;
+            padding: 16px 18px;
+        }
+
+        .btn-filter {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            box-shadow: 0 4px 15px rgba(0, 245, 255, 0.3);
+        }
+        .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 245, 255, 0.5);
+        }
+
+        .btn-export-csv {
+            background: linear-gradient(135deg, var(--accent-success), #00d976);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+        .btn-export-csv:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.5);
+        }
+        
+        .btn-export-excel {
+            background: linear-gradient(135deg, var(--accent-success), #00b86b); 
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+        .btn-export-excel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.5);
+        }
+
+        /* --- Estilos de la Tabla --- */
+        .table-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 36px;
+            box-shadow: var(--shadow-glow);
+            animation: fadeInUp 1.2s ease;
+        }
+        
+        .table-title {
+            font-size: 1.8em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto; /* Para responsive */
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text-primary);
+        }
+        
+        th, td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.95em;
+        }
+        
+        th {
+            background-color: var(--bg-tertiary);
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover {
+            background-color: var(--bg-tertiary);
+        }
+        
+        td .state-sobrecarga {
+            color: var(--accent-danger);
+            font-weight: 700;
+            text-shadow: 0 0 10px var(--accent-danger);
+        }
+        
+        td .state-normal {
+            color: var(--accent-success);
+            font-weight: 600;
+        }
+
+        .loading-text, .no-data-text {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* --- ¡NUEVO! ESTILOS DE PAGINACIÓN --- */
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0 0 0;
+            margin-top: 20px;
+            border-top: 2px solid var(--border-color);
+        }
+        .pagination-info {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .pagination-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .pagination-buttons button {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .pagination-buttons button:hover {
+            border-color: var(--border-glow);
+            background: var(--bg-secondary);
+        }
+        .pagination-buttons button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        /* --- FIN ESTILOS PAGINACIÓN --- */
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 30px;
+            border-top: 2px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .footer p {
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 992px) {
+            .history-controls {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+            .header { padding: 20px; }
+            .logo-text h1 { font-size: 1.8em; }
+            .header-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+            .theme-toggle, .nav-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .history-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">⚡</div>
+                    <div class="logo-text">
+                        <h1>SafyraShield</h1>
+                        <p>Monitor Inteligente de Consumo Eléctrico</p>
+                    </div>
+                </div>
+                
+                <div class="header-controls">
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <span id="theme-icon">🌙</span>
+                        <span id="theme-text">Modo Oscuro</span>
+                    </button>
+                    
+                    <a href="/" class="nav-btn">
+                        🏠 Volver al Dashboard
+                    </a>
+                    
+                    <button class="nav-btn" onclick="logout()">
+                        🔒 Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="history-controls">
+            <div class="control-group">
+                <label for="sensor-select">Sensor</label>
+                <select id="sensor-select">
+                    <option value="LAB-PC-01">LAB-PC-01</option>
+                    <option value="LAB-PC-02">LAB-PC-02</option>
+                    <option value="LAB-PC-03">LAB-PC-03</option>
+                    <option value="">Todos los Sensores</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="start-date">Fecha de Inicio</label>
+                <input type="datetime-local" id="start-date">
+            </div>
+
+            <div class="control-group">
+                <label for="end-date">Fecha de Fin</label>
+                <input type="datetime-local" id="end-date">
+            </div>
+            
+            <div class="control-group">
+                <label>&nbsp;</label> <button class="btn-control btn-filter" id="filter-btn">
+                    🔍 Filtrar Datos
+                </button>
+            </div>
+            
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button class="btn-control btn-export-csv" id="export-csv-btn">
+                    📄 Exportar a CSV
+                </button>
+            </div>
+            
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button class="btn-control btn-export-excel" id="export-excel-btn">
+                    📊 Exportar a Excel
+                </button>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <h2 class="table-title">📑 Registros Históricos</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sensor</th>
+                            <th>Fecha y Hora</th>
+                            <th>Corriente (A)</th>
+                            <th>Potencia (W)</th>
+                            <th>Dispositivo Detectado</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <tr>
+                            <td colspan="6" class="loading-text">Cargando datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-controls" id="pagination-controls" style="display: none;">
+                <span class="pagination-info" id="pagination-info"></span>
+                <div class="pagination-buttons">
+                    <button id="prev-page-btn">← Anterior</button>
+                    <button id="next-page-btn">Siguiente →</button>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="footer">
+            <p id="last-update">Página de historial</p>
+        </footer>
+    </div>
+
+    <script>
+        // ======================================================================
+        // SEGURIDAD Y AUTENTICACIÓN
+        // ======================================================================
+        
+        const token = localStorage.getItem('safyraToken');
+        if (!token) {
+            console.warn("⚠️ No hay token de autenticación. Redirigiendo a login...");
+            window.location.href = '/login';
+        }
+        const AUTH_HEADER = { 'Authorization': `Bearer ${token}` };
+
+        function logout() {
+            localStorage.removeItem('safyraToken');
+            window.location.href = '/login';
+        }
+
+        // ======================================================================
+        // SISTEMA DE TEMA
+        // ======================================================================
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            if (newTheme === 'light') {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Modo Claro';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Modo Oscuro';
+            }
+            localStorage.setItem('theme', newTheme);
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.body.setAttribute('data-theme', savedTheme);
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            if (savedTheme === 'light') {
+                if(themeIcon) themeIcon.textContent = '☀️';
+                if(themeText) themeText.textContent = 'Modo Claro';
+            } else {
+                if(themeIcon) themeIcon.textContent = '🌙';
+                if(themeText) themeText.textContent = 'Modo Oscuro';
+            }
+        }
+
+        // ======================================================================
+        // LÓGICA DE PÁGINA DE HISTORIAL (¡CORREGIDA + PAGINACIÓN!)
+        // ======================================================================
+        
+        const SENSOR_IDS = ["LAB-PC-01", "LAB-PC-02", "LAB-PC-03"];
+        
+        const sensorSelect = document.getElementById('sensor-select');
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+        const filterBtn = document.getElementById('filter-btn');
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+        const exportExcelBtn = document.getElementById('export-excel-btn');
+        const tableBody = document.getElementById('history-table-body');
+
+        // --- ¡NUEVO! Variables de Paginación ---
+        const paginationControls = document.getElementById('pagination-controls');
+        const paginationInfo = document.getElementById('pagination-info');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+
+        let allHistoryData = []; // Almacena TODOS los datos
+        let currentPage = 1;
+        const ROWS_PER_PAGE = 20; // Mostrar 20 registros por página
+        // --- Fin ---
+
+        /**
+         * ¡CORREGIDO!
+         * Convierte la fecha del input a la clave de Firebase
+         */
+        function formatDateTimeToKey(dateTimeString) {
+            if (!dateTimeString) return null;
+            // 1. Crear un objeto Date a partir del string local
+            const date = new Date(dateTimeString);
+            // 2. Formatear a YYYY-MM-DDTHH:MM:SS
+            const z = n => (n < 10 ? '0' : '') + n;
+            return `${date.getFullYear()}-${z(date.getMonth() + 1)}-${z(date.getDate())}T${z(date.getHours())}:${z(date.getMinutes())}:${z(date.getSeconds())}`;
+        }
+
+        async function fetchHistory() {
+            tableBody.innerHTML = '<tr><td colspan="6" class="loading-text">Cargando datos...</td></tr>';
+            
+            const selectedSensor = sensorSelect.value;
+            
+            // ¡¡AQUÍ ESTÁ LA CORRECCIÓN!!
+            const startDate = formatDateTimeToKey(startDateInput.value);
+            const endDate = formatDateTimeToKey(endDateInput.value);
+
+            let sensorsToFetch = [];
+            if (selectedSensor) {
+                sensorsToFetch.push(selectedSensor);
+            } else {
+                sensorsToFetch = SENSOR_IDS;
+            }
+
+            let allHistoryDataRaw = [];
+            let fetchHasFailed = false;
+
+            try {
+                for (const sensorId of sensorsToFetch) {
+                    // Usamos un límite grande para el filtrado, la paginación es en el cliente
+                    let url = `/api/data/history/${sensorId}?limit=2000`; 
+                    
+                    if (startDate) url += `&start_date=${encodeURIComponent(startDate)}`;
+                    if (endDate) url += `&end_date=${encodeURIComponent(endDate)}`;
+
+                    const response = await fetch(url, { headers: AUTH_HEADER });
+                    
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            alert("Sesión expirada. Por favor, inicia sesión de nuevo.");
+                            logout();
+                            fetchHasFailed = true;
+                            break;
+                        }
+                        const errData = await response.json().catch(() => ({}));
+                        console.error(`Error al obtener historial de ${sensorId}: ${errData.detail || response.statusText}`);
+                        continue; 
+                    }
+                    
+                    const data = await response.json();
+                    const sensorData = data.data.map(record => ({
+                        ...record,
+                        sensor_id: data.sensor_id 
+                    }));
+                    allHistoryDataRaw.push(...sensorData);
+                }
+                
+                if (!fetchHasFailed) {
+                    allHistoryDataRaw.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    allHistoryData = allHistoryDataRaw;
+                    currentPage = 1; // Resetea a la página 1
+                    renderTable(); // Renderiza la primera página
+                }
+
+            } catch (error) {
+                console.error("Error en fetchHistory:", error);
+                tableBody.innerHTML = `<tr><td colspan="6" class="loading-text" style="color: var(--accent-danger);">❌ ${error.message}</td></tr>`;
+            }
+        }
+
+        /**
+         * ¡MODIFICADO! Ahora usa paginación
+         */
+        function renderTable() {
+            tableBody.innerHTML = '';
+            if (allHistoryData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="no-data-text">No se encontraron registros para los filtros seleccionados.</td></tr>';
+                paginationControls.style.display = 'none';
+                return;
+            }
+
+            // --- Lógica de Paginación ---
+            const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+            const endIndex = startIndex + ROWS_PER_PAGE;
+            const paginatedData = allHistoryData.slice(startIndex, endIndex);
+            const totalPages = Math.ceil(allHistoryData.length / ROWS_PER_PAGE);
+            
+            paginationControls.style.display = 'flex';
+            paginationInfo.textContent = `Página ${currentPage} de ${totalPages} (Total: ${allHistoryData.length} registros)`;
+            prevPageBtn.disabled = (currentPage === 1);
+            nextPageBtn.disabled = (currentPage === totalPages);
+            // --- Fin Lógica Paginación ---
+
+            paginatedData.forEach(record => {
+                const tr = document.createElement('tr');
+                const timestamp = new Date(record.timestamp).toLocaleString('es-PE', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+                
+                const estadoClass = `state-${record.estado.toLowerCase()}`; 
+                
+                tr.innerHTML = `
+                    <td><strong>${record.sensor_id}</strong></td>
+                    <td>${timestamp}</td>
+                    <td>${record.irms.toFixed(3)} A</td>
+                    <td>${record.potencia.toFixed(0)} W</td>
+                    <td>${record.device.icon} ${record.device.type}</td>
+                    <td>
+                        <span class="${estadoClass}">
+                            ${record.estado}
+                        </span>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+        
+        async function exportData(format) {
+            console.log(`Iniciando exportación a ${format}...`);
+            
+            const sensorId = sensorSelect.value || '';
+            const startDate = formatDateTimeToKey(startDateInput.value);
+            const endDate = formatDateTimeToKey(endDateInput.value);
+
+            let url = `/api/data/export/${format}?`;
+            const params = new URLSearchParams();
+            if (sensorId) params.append('sensor_id', sensorId);
+            if (startDate) params.append('start_date', encodeURIComponent(startDate));
+            if (endDate) params.append('end_date', encodeURIComponent(endDate));
+            url += params.toString();
+            
+            try {
+                const response = await fetch(url, { headers: AUTH_HEADER });
+                if (!response.ok) {
+                    if (response.status === 401) logout();
+                    throw new Error(`Error en la respuesta de la API: ${response.statusText}`);
+                }
+                const disposition = response.headers.get('content-disposition');
+                let filename = `safyrashield_export.${format}`;
+                if (disposition && disposition.indexOf('attachment') !== -1) {
+                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                    const matches = filenameRegex.exec(disposition);
+                    if (matches != null && matches[1]) {
+                        filename = matches[1].replace(/['"]/g, '');
+                    }
+                }
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                a.remove();
+            } catch (error) {
+                console.error(`Error al exportar ${format}:`, error);
+                alert(`❌ Error al exportar archivo: ${error.message}`);
+            }
+        }
+
+
+        // ======================================================================
+        // INICIALIZACIÓN
+        // ======================================================================
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log('🚀 SafyraShield Premium - Inicializando Página de Historial');
+            loadTheme();
+            
+            filterBtn.addEventListener('click', fetchHistory);
+            exportCsvBtn.addEventListener('click', () => exportData('csv'));
+            exportExcelBtn.addEventListener('click', () => exportData('excel'));
+            
+            // --- ¡NUEVO! Listeners de Paginación ---
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable(); // Re-renderizar
+                }
+            });
+            nextPageBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(allHistoryData.length / ROWS_PER_PAGE);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable(); // Re-renderizar
+                }
+            });
+            // --- Fin Listeners Paginación ---
+            
+            const now = new Date();
+            const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            
+            const toLocalISOString = date => {
+                const z = n => (n < 10 ? '0' : '') + n;
+                const offset = date.getTimezoneOffset();
+                const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+                return localDate.toISOString().slice(0, 16); // Devuelve YYYY-MM-DDTHH:MM
+            }
+
+            startDateInput.value = toLocalISOString(yesterday);
+            endDateInput.value = toLocalISOString(now);
+            
+            fetchHistory();
+        });
+    </script>
+</body>
+</html>
