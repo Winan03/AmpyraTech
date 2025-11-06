@@ -1,12 +1,16 @@
 # api/index.py
-import traceback
+import os
+from mangum import Mangum
+
+# Forzar que el directorio de trabajo sea la raíz del proyecto
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 try:
     from app.main import app
-    from mangum import Mangum
     handler = Mangum(app)
-    print("App loaded successfully")
+    print("API loaded successfully")
 except Exception as e:
-    print("FATAL ERROR LOADING APP:")
-    print(traceback.format_exc())
+    print("FATAL ERROR:")
+    import traceback
+    traceback.print_exc()
     raise
