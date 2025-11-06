@@ -2,8 +2,8 @@
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from routers.data_api import router as data_router
-from routers.auth_api import router as auth_router
+from app.routers.data_api import router as data_router
+from app.routers.auth_api import router as auth_router 
 import os
 
 app = FastAPI(title="SafyraShield API - Sprint 3")
