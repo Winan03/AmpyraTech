@@ -1,5 +1,12 @@
 # api/index.py
-from app.main import app
-from mangum import Mangum
+import traceback
 
-handler = Mangum(app)
+try:
+    from app.main import app
+    from mangum import Mangum
+    handler = Mangum(app)
+    print("App loaded successfully")
+except Exception as e:
+    print("FATAL ERROR LOADING APP:")
+    print(traceback.format_exc())
+    raise
