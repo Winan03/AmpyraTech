@@ -204,26 +204,11 @@
             box-shadow: var(--shadow-intense);
             transform: translateY(-2px);
         }
-
-        /* ============================================
-           TARJETAS DE RESUMEN
-           ============================================ */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            margin-bottom: 30px;
-            animation: fadeInUp 0.8s ease;
-        }
-
+        
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        /* ============================================
-           CONTROLES DE HISTORIAL
-           ============================================ */
         
         .history-controls {
             background: var(--bg-card);
@@ -338,7 +323,7 @@
 
         .table-wrapper {
             width: 100%;
-            overflow-x: auto; /* Para responsive */
+            overflow-x: auto; 
             background: var(--bg-secondary);
             border-radius: 16px;
             padding: 20px;
@@ -392,7 +377,7 @@
             font-style: italic;
         }
 
-        /* --- ¡NUEVO! ESTILOS DE PAGINACIÓN --- */
+        /* --- ESTILOS DE PAGINACIÓN --- */
         .pagination-controls {
             display: flex;
             justify-content: space-between;
@@ -430,9 +415,6 @@
         }
         /* --- FIN ESTILOS PAGINACIÓN --- */
 
-        /* ============================================
-           FOOTER
-           ============================================ */
         .footer {
             text-align: center;
             padding: 30px;
@@ -446,9 +428,6 @@
             font-style: italic;
         }
 
-        /* ============================================
-           RESPONSIVE
-           ============================================ */
         @media (max-width: 992px) {
             .history-controls {
                 grid-template-columns: 1fr 1fr;
@@ -647,7 +626,7 @@
         const exportExcelBtn = document.getElementById('export-excel-btn');
         const tableBody = document.getElementById('history-table-body');
 
-        // --- ¡NUEVO! Variables de Paginación ---
+        // --- Variables de Paginación ---
         const paginationControls = document.getElementById('pagination-controls');
         const paginationInfo = document.getElementById('pagination-info');
         const prevPageBtn = document.getElementById('prev-page-btn');
@@ -656,17 +635,17 @@
         let allHistoryData = []; // Almacena TODOS los datos
         let currentPage = 1;
         const ROWS_PER_PAGE = 20; // Mostrar 20 registros por página
-        // --- Fin ---
 
         /**
          * ¡CORREGIDO!
          * Convierte la fecha del input a la clave de Firebase
+         * (de "2025-11-05T19:30" a "2025-11-05T19:30:00")
          */
         function formatDateTimeToKey(dateTimeString) {
             if (!dateTimeString) return null;
             // 1. Crear un objeto Date a partir del string local
             const date = new Date(dateTimeString);
-            // 2. Formatear a YYYY-MM-DDTHH:MM:SS
+            // 2. Formatear a YYYY-MM-DDTHH:MM:SS (formato local)
             const z = n => (n < 10 ? '0' : '') + n;
             return `${date.getFullYear()}-${z(date.getMonth() + 1)}-${z(date.getDate())}T${z(date.getHours())}:${z(date.getMinutes())}:${z(date.getSeconds())}`;
         }
@@ -827,7 +806,6 @@
             }
         }
 
-
         // ======================================================================
         // INICIALIZACIÓN
         // ======================================================================
@@ -839,7 +817,7 @@
             exportCsvBtn.addEventListener('click', () => exportData('csv'));
             exportExcelBtn.addEventListener('click', () => exportData('excel'));
             
-            // --- ¡NUEVO! Listeners de Paginación ---
+            // --- Listeners de Paginación ---
             prevPageBtn.addEventListener('click', () => {
                 if (currentPage > 1) {
                     currentPage--;
@@ -853,16 +831,15 @@
                     renderTable(); // Re-renderizar
                 }
             });
-            // --- Fin Listeners Paginación ---
             
             const now = new Date();
             const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
             
+            // ¡CORREGIDO! Esta función formatea la fecha local para el input
             const toLocalISOString = date => {
                 const z = n => (n < 10 ? '0' : '') + n;
-                const offset = date.getTimezoneOffset();
-                const localDate = new Date(date.getTime() - (offset * 60 * 1000));
-                return localDate.toISOString().slice(0, 16); // Devuelve YYYY-MM-DDTHH:MM
+                // Obtenemos la fecha local, no UTC
+                return `${date.getFullYear()}-${z(date.getMonth() + 1)}-${z(date.getDate())}T${z(date.getHours())}:${z(date.getMinutes())}`;
             }
 
             startDateInput.value = toLocalISOString(yesterday);
