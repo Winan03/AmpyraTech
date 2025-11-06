@@ -2,12 +2,9 @@ fastapi==0.115.0
 uvicorn==0.31.0
 mangum==0.17.0
 jinja2==3.1.4
-pydantic==2.9.2
 firebase-admin==6.5.0
 python-dotenv==1.0.1
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 python-jose[cryptography]
 openpyxl
-starlette
-mangum==0.17.0
