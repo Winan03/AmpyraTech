@@ -3,7 +3,7 @@ from firebase_admin import credentials, db
 from dotenv import load_dotenv
 import os
 import json
-import base64  # <--- 1. IMPORTANTE: Añade esta línea
+import base64  # Importar base64
 from typing import List, Dict
 from datetime import datetime
 
@@ -14,14 +14,22 @@ from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils import get_column_letter
 # ==================================
 
-load_dotenv()
+# --- ¡¡AQUÍ ESTÁ LA CORRECCIÓN!! ---
+# Solo cargar .env si NO estamos en Vercel (para desarrollo local)
+if os.getenv("VERCEL") != "1":
+    print("Cargando variables de entorno desde .env (Modo Local)...")
+    load_dotenv()
+else:
+    print("Saltando load_dotenv() (Modo Vercel)...")
+# --- FIN DE LA CORRECCIÓN ---
+
 
 # ======================================================================
 # INICIALIZACIÓN DE FIREBASE (Modificado para Base64)
 # ======================================================================
 
 database_url = os.getenv("FIREBASE_DATABASE_URL")
-cred_json_content = os.getenv("FIREBASE_PRIVATE_KEY_JSON") # Esto ahora será el texto Base64
+cred_json_content = os.getenv("FIREBASE_PRIVATE_KEY_JSON") # Esto es el texto Base64
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
 if not database_url:
@@ -33,12 +41,10 @@ if not firebase_admin._apps:
         if cred_json_content:
             print("Inicializando Firebase con credenciales JSON (Modo Vercel)...")
             
-            # --- 2. INICIO DE LA MODIFICACIÓN ---
             # Decodifica el string Base64 a un string JSON normal
             print("Decodificando credenciales Base64...")
             decoded_json_string = base64.b64decode(cred_json_content).decode('utf-8')
             service_account_info = json.loads(decoded_json_string)
-            # --- FIN DE LA MODIFICACIÓN ---
             
             cred = credentials.Certificate(service_account_info)
             
