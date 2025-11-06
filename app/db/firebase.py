@@ -3,6 +3,7 @@ from firebase_admin import credentials, db
 from dotenv import load_dotenv
 import os
 import json
+import base64  # <--- 1. IMPORTANTE: Añade esta línea
 from typing import List, Dict
 from datetime import datetime
 
@@ -16,11 +17,11 @@ from openpyxl.utils import get_column_letter
 load_dotenv()
 
 # ======================================================================
-# INICIALIZACIÓN DE FIREBASE (Sin cambios)
+# INICIALIZACIÓN DE FIREBASE (Modificado para Base64)
 # ======================================================================
 
 database_url = os.getenv("FIREBASE_DATABASE_URL")
-cred_json_content = os.getenv("FIREBASE_PRIVATE_KEY_JSON")
+cred_json_content = os.getenv("FIREBASE_PRIVATE_KEY_JSON") # Esto ahora será el texto Base64
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
 if not database_url:
@@ -31,8 +32,16 @@ if not firebase_admin._apps:
         cred = None
         if cred_json_content:
             print("Inicializando Firebase con credenciales JSON (Modo Vercel)...")
-            service_account_info = json.loads(cred_json_content)
+            
+            # --- 2. INICIO DE LA MODIFICACIÓN ---
+            # Decodifica el string Base64 a un string JSON normal
+            print("Decodificando credenciales Base64...")
+            decoded_json_string = base64.b64decode(cred_json_content).decode('utf-8')
+            service_account_info = json.loads(decoded_json_string)
+            # --- FIN DE LA MODIFICACIÓN ---
+            
             cred = credentials.Certificate(service_account_info)
+            
         elif cred_path:
             print(f"Inicializando Firebase con ruta de archivo: {cred_path} (Modo Local)...")
             if not os.path.exists(cred_path):
@@ -47,6 +56,8 @@ if not firebase_admin._apps:
         print("Firebase initialized successfully")
         
     except Exception as e:
+        # Imprime un error más detallado si falla la decodificación o inicialización
+        print(f"ERROR FATAL AL INICIALIZAR FIREBASE: {str(e)}")
         raise Exception(f"Failed to initialize Firebase: {str(e)}")
 
 # ======================================================================
