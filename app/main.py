@@ -6,13 +6,9 @@ from app.routers.auth_api import router as auth_router
 
 app = FastAPI(title="SafyraShield API - Sprint 3")
 
-# 1. Montar 'static'
-# (Asegúrate de que la ruta a 'static' sea correcta desde donde ejecutas main.py)
-# Si 'app' está en el mismo nivel que 'main.py', la ruta es "app/static"
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-# 2. Configurar plantillas
-templates = Jinja2Templates(directory="app/templates")
+# CORREGIDO: rutas relativas desde app/main.py
+app.mount("/static", StaticFiles(directory="static"), name="static") 
+templates = Jinja2Templates(directory="templates")
 
 # 3. Incluir routers de API
 app.include_router(data_router, prefix="/api")
