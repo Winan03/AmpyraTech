@@ -1,55 +1,44 @@
+# app/main.py
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from app.routers.data_api import router as data_router
 from app.routers.auth_api import router as auth_router 
+import os
 
 app = FastAPI(title="SafyraShield API - Sprint 3")
 
-# CORREGIDO: rutas relativas desde app/main.py
-app.mount("/static", StaticFiles(directory="static"), name="static") 
-templates = Jinja2Templates(directory="templates")
+# RUTAS ABSOLUTAS (funciona en Vercel y local)
+BASE_DIR = os.path.dirname(__file__)
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
-# 3. Incluir routers de API
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
+
+# Routers
 app.include_router(data_router, prefix="/api")
-app.include_router(auth_router) # Para /token
+app.include_router(auth_router)
 
-# ======================================================================
-# ENDPOINTS DE PÁGINAS (HTML)
-# ======================================================================
-
+# Rutas HTML
 @app.get("/login")
 async def login_page(request: Request):
-    """Sirve la página de inicio de sesión"""
     return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/")
 async def root(request: Request):
-    """SirVE la página principal del dashboard"""
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/history")
 async def history_page(request: Request):
-    """Sirve la página de historial"""
     return templates.TemplateResponse("history.html", {"request": request})
 
-# ======================================================================
-# ¡NUEVA RUTA DE PÁGINA DE ALERTAS!
-# ======================================================================
 @app.get("/alerts")
 async def alerts_page(request: Request):
-    """Sirve la página de registro de alertas"""
     return templates.TemplateResponse("alerts.html", {"request": request})
-# ======================================================================
 
-# ======================================================================
-# HEALTH CHECK
-# ======================================================================
 @app.get("/health")
 async def health_check():
-    """
-    Endpoint para verificar el estado del servidor
-    """
     return {
         "status": "online",
         "service": "SafyraShield IoT Monitor",
