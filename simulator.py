@@ -3,9 +3,12 @@ from firebase_admin import credentials, db
 from dotenv import load_dotenv
 import os
 import json
+import base64
+import binascii
 import time
 import random
 from datetime import datetime
+from typing import Any, Optional
 
 # --- CONFIGURACIÓN DE SIMULACIÓN ---
 SENSOR_IDS = ["LAB-PC-01", "LAB-PC-02", "LAB-PC-03"]
@@ -13,14 +16,31 @@ UPDATE_INTERVAL_SECONDS = 3 # Intervalo de actualización (igual que tu dashboar
 SCENARIO_DURATION_SECONDS = 30 # Duración de cada escenario
 # -----------------------------------
 
-def initialize_firebase():
+def load_service_account_from_env() -> Optional[dict[str, Any]]:
+    cred_json_base64 = os.getenv("FIREBASE_PRIVATE_KEY_JSON_BASE64")
+    cred_json_raw = os.getenv("FIREBASE_PRIVATE_KEY_JSON")
+
+    if cred_json_base64:
+        decoded_json_string = base64.b64decode(cred_json_base64).decode("utf-8")
+        return json.loads(decoded_json_string)
+
+    if cred_json_raw:
+        try:
+            decoded_json_string = base64.b64decode(cred_json_raw, validate=True).decode("utf-8")
+            return json.loads(decoded_json_string)
+        except (binascii.Error, UnicodeDecodeError, json.JSONDecodeError):
+            return json.loads(cred_json_raw)
+
+    return None
+
+
+def initialize_firebase() -> None:
     """
     Se conecta a Firebase usando las mismas credenciales que tu main.py.
     """
     load_dotenv() # Carga el archivo .env
 
     database_url = os.getenv("FIREBASE_DATABASE_URL")
-    cred_json_content = os.getenv("FIREBASE_PRIVATE_KEY_JSON")
     cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
     if not database_url:
@@ -29,9 +49,9 @@ def initialize_firebase():
     if not firebase_admin._apps:
         try:
             cred = None
-            if cred_json_content:
-                print("Simulador: Inicializando Firebase con credenciales JSON (Modo Vercel)...")
-                service_account_info = json.loads(cred_json_content)
+            service_account_info = load_service_account_from_env()
+            if service_account_info:
+                print("Simulador: Inicializando Firebase con credenciales JSON desde variable de entorno...")
                 cred = credentials.Certificate(service_account_info)
             elif cred_path:
                 print(f"Simulador: Inicializando Firebase con ruta de archivo: {cred_path} (Modo Local)...")
@@ -39,7 +59,7 @@ def initialize_firebase():
                     raise FileNotFoundError(f"El archivo de credenciales no se encuentra en la ruta: {cred_path}")
                 cred = credentials.Certificate(cred_path)
             else:
-                raise ValueError("No se encontró 'FIREBASE_PRIVATE_KEY_JSON' ni 'FIREBASE_CREDENTIALS_PATH'.")
+                raise ValueError("No se encontró 'FIREBASE_PRIVATE_KEY_JSON_BASE64', 'FIREBASE_PRIVATE_KEY_JSON' ni 'FIREBASE_CREDENTIALS_PATH'.")
 
             firebase_admin.initialize_app(cred, {
                 'databaseURL': database_url
@@ -50,7 +70,7 @@ def initialize_firebase():
             print(f"Simulador: Failed to initialize Firebase: {str(e)}")
             exit(1)
 
-def get_scenario_data(sensor_id, scenario_index):
+def get_scenario_data(sensor_id: str, scenario_index: int) -> tuple[float, float, str]:
     """
     Genera los datos de simulación basados en el escenario actual.
     """
@@ -86,7 +106,7 @@ def get_scenario_data(sensor_id, scenario_index):
     potencia = irms * 220 # Asumimos 220V
     return irms, potencia, estado
 
-def main():
+def main() -> None:
     """
     Bucle principal del simulador.
     """

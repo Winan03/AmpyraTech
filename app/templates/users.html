@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafyraShield - Usuarios</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #eef3f7;
+            --surface: #ffffff;
+            --surface-soft: #f7f9fc;
+            --line: #d8e0ea;
+            --text: #172033;
+            --muted: #61708a;
+            --primary: #1167d8;
+            --primary-strong: #0b4faf;
+            --cyan: #00a6c8;
+            --pink: #cf2d82;
+            --success: #0f9f6e;
+            --warning: #b98500;
+            --danger: #c9364c;
+            --shadow: 0 14px 36px rgba(23, 32, 51, .10);
+            --radius: 14px;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0a0e27;
+            --surface: #151932;
+            --surface-soft: #1e2343;
+            --line: rgba(255, 255, 255, .12);
+            --text: #ffffff;
+            --muted: #a8b2d1;
+            --primary: #00d9ff;
+            --primary-strong: #00a6c8;
+            --cyan: #00f5ff;
+            --pink: #ff006e;
+            --success: #00d97a;
+            --warning: #ffd60a;
+            --danger: #ff4d72;
+            --shadow: 0 16px 42px rgba(0, 245, 255, .11);
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 22px;
+        }
+
+        [hidden] { display: none !important; }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px 30px;
+            margin-bottom: 24px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            font-size: 2rem;
+            filter: drop-shadow(0 8px 16px rgba(0, 166, 200, .32));
+        }
+
+        .brand h1 {
+            font-size: 1.7rem;
+            line-height: 1;
+            color: var(--primary);
+        }
+
+        .brand p {
+            color: var(--muted);
+            margin-top: 7px;
+            font-weight: 600;
+            font-size: .92rem;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn, .theme-toggle {
+            border: 1px solid var(--line);
+            background: var(--surface-soft);
+            color: var(--text);
+            border-radius: 999px;
+            min-height: 40px;
+            padding: 10px 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-weight: 750;
+            cursor: pointer;
+        }
+
+        .role-chip {
+            color: var(--primary);
+            border-color: color-mix(in srgb, var(--primary), var(--line) 35%);
+            cursor: default;
+        }
+
+        .page-grid {
+            display: grid;
+            grid-template-columns: 390px minmax(0, 1fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .panel, .directory, .metric {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .panel {
+            padding: 24px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 18px;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 14px;
+        }
+
+        .field label {
+            display: block;
+            color: var(--muted);
+            font-size: .83rem;
+            font-weight: 800;
+            margin-bottom: 7px;
+        }
+
+        input, select {
+            width: 100%;
+            min-height: 42px;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--surface-soft);
+            color: var(--text);
+            font-size: .94rem;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid color-mix(in srgb, var(--primary), transparent 72%);
+            border-color: var(--primary);
+        }
+
+        .primary-btn, .secondary-btn, .danger-btn {
+            border: 0;
+            border-radius: 10px;
+            min-height: 42px;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-weight: 800;
+        }
+
+        .primary-btn {
+            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--pink));
+        }
+
+        .secondary-btn {
+            color: var(--text);
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+        }
+
+        .danger-btn {
+            color: white;
+            background: var(--danger);
+        }
+
+        .message {
+            display: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 650;
+            line-height: 1.45;
+        }
+
+        .message.show { display: block; }
+        .message.ok { color: var(--success); background: color-mix(in srgb, var(--success), transparent 88%); border: 1px solid color-mix(in srgb, var(--success), transparent 65%); }
+        .message.error { color: var(--danger); background: color-mix(in srgb, var(--danger), transparent 88%); border: 1px solid color-mix(in srgb, var(--danger), transparent 65%); }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .metric {
+            padding: 16px;
+        }
+
+        .metric span {
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: .72rem;
+            font-weight: 850;
+            letter-spacing: .06em;
+        }
+
+        .metric strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 1.65rem;
+            color: var(--primary);
+        }
+
+        .directory {
+            padding: 22px;
+        }
+
+        .directory-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            max-width: 340px;
+        }
+
+        .user-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .user-row {
+            display: grid;
+            grid-template-columns: minmax(220px, 1.35fr) minmax(160px, .75fr) minmax(160px, .75fr) auto;
+            gap: 12px;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--surface-soft);
+        }
+
+        .user-name {
+            font-weight: 850;
+            margin-bottom: 5px;
+        }
+
+        .user-email {
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-size: .8rem;
+            font-weight: 850;
+            background: color-mix(in srgb, var(--primary), transparent 86%);
+            color: var(--primary);
+        }
+
+        .pill.operativo { color: var(--cyan); background: color-mix(in srgb, var(--cyan), transparent 86%); }
+        .pill.auditor { color: var(--pink); background: color-mix(in srgb, var(--pink), transparent 88%); }
+        .pill.activo { color: var(--success); background: color-mix(in srgb, var(--success), transparent 88%); }
+        .pill.congelado { color: var(--warning); background: color-mix(in srgb, var(--warning), transparent 86%); }
+        .pill.deshabilitado { color: var(--danger); background: color-mix(in srgb, var(--danger), transparent 88%); }
+
+        .empty-state {
+            padding: 26px;
+            text-align: center;
+            color: var(--muted);
+            border: 1px dashed var(--line);
+            border-radius: 12px;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .45);
+            padding: 20px;
+            z-index: 20;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            width: min(560px, 100%);
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .modal-title {
+            color: var(--primary);
+            font-size: 1.25rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: end;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        @media (max-width: 1100px) {
+            .page-grid { grid-template-columns: 1fr; }
+            .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .user-row { grid-template-columns: 1fr; align-items: start; }
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+            .header, .panel, .directory { padding: 18px; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .nav-btn, .theme-toggle { width: 100%; justify-content: center; }
+        }
+    </style>
+    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260601-5">
+</head>
+<body data-theme="light">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <img class="sidebar-logo-img" src="/static/img/safyrashield-logo.png" alt="SafyraShield IoT" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
+                <span class="sidebar-logo-fallback" hidden>S</span>
+                <div>
+                    <strong>SafyraShield IoT</strong>
+                    <span>Monitoreo inteligente</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" aria-label="Navegaci&oacute;n principal">
+                <div class="sidebar-section-label">Navegaci&oacute;n</div>
+                <a class="sidebar-link" href="/" data-roles="admin,operativo">
+                    <span class="sidebar-icon" aria-hidden="true">DB</span>
+                    <span class="sidebar-copy">
+                        <strong>Dashboard</strong>
+                        <small>Lectura por sal&oacute;n</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/alerts">
+                    <span class="sidebar-icon" aria-hidden="true">AL</span>
+                    <span class="sidebar-copy">
+                        <strong>Alertas</strong>
+                        <small>Eventos cr&iacute;ticos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/history" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">HI</span>
+                    <span class="sidebar-copy">
+                        <strong>Historial</strong>
+                        <small>Registros el&eacute;ctricos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link active" href="/users" data-roles="admin">
+                    <span class="sidebar-icon" aria-hidden="true">US</span>
+                    <span class="sidebar-copy">
+                        <strong>Usuarios</strong>
+                        <small>Roles y estados</small>
+                    </span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-session">
+                    <span class="sidebar-user-icon" aria-hidden="true">US</span>
+                    <span class="sidebar-user-copy">
+                        <strong data-user-label>Validando usuario...</strong>
+                        <small data-role-badge>Validando rol...</small>
+                    </span>
+                </div>
+                <button class="sidebar-action logout" type="button" onclick="logout()">Cerrar sesi&oacute;n</button>
+            </div>
+        </aside>
+
+        <main class="workspace">
+            <div class="container">
+        <header class="header shell-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-text shell-title">
+                        <h1>Gestión de Usuarios</h1>
+                        <p>Roles, estados y accesos del sistema</p>
+                    </div>
+                </div>
+
+                <div class="header-controls">
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <span id="theme-icon">☀️</span>
+                        <span id="theme-text">Modo Claro</span>
+                    </button>
+                    <span class="nav-btn role-chip" data-role-badge>Validando rol...</span>
+                    <a href="/" class="nav-btn mobile-nav">🏠 Dashboard</a>
+                    <a href="/history" class="nav-btn mobile-nav">📋 Historial</a>
+                    <a href="/alerts" class="nav-btn mobile-nav">⚠️ Alertas</a>
+                    <button class="nav-btn mobile-nav" onclick="logout()">🔒 Cerrar Sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="metrics-grid">
+            <div class="metric"><span>Total</span><strong id="metric-total">0</strong></div>
+            <div class="metric"><span>Activos</span><strong id="metric-active">0</strong></div>
+            <div class="metric"><span>Congelados</span><strong id="metric-frozen">0</strong></div>
+            <div class="metric"><span>Admins</span><strong id="metric-admins">0</strong></div>
+        </section>
+
+        <section class="page-grid">
+            <section class="panel">
+                <h2 class="section-title">Nuevo usuario</h2>
+                <form id="create-user-form" class="form-grid">
+                    <div class="field">
+                        <label for="username">Usuario interno</label>
+                        <input id="username" name="username" type="text" minlength="3" maxlength="50" required placeholder="operativo_lab">
+                    </div>
+                    <div class="field">
+                        <label for="email">Correo</label>
+                        <input id="email" name="email" type="email" required placeholder="usuario@institucion.edu.pe">
+                    </div>
+                    <div class="field">
+                        <label for="full-name">Nombre completo</label>
+                        <input id="full-name" name="full_name" type="text" placeholder="Nombre del responsable">
+                    </div>
+                    <div class="field">
+                        <label for="password">Contraseña inicial</label>
+                        <input id="password" name="password" type="password" minlength="12" required autocomplete="new-password">
+                    </div>
+                    <div class="field">
+                        <label for="role">Rol</label>
+                        <select id="role" name="role" required>
+                            <option value="operativo">Operativo</option>
+                            <option value="auditor">Auditor / Dirección</option>
+                            <option value="admin">Admin / Custodio</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="status">Estado</label>
+                        <select id="status" name="status" required>
+                            <option value="activo">Activo</option>
+                            <option value="deshabilitado">Deshabilitado</option>
+                            <option value="congelado">Congelado</option>
+                        </select>
+                    </div>
+                    <button class="primary-btn" type="submit">Crear usuario</button>
+                    <div id="form-message" class="message"></div>
+                </form>
+            </section>
+
+            <section class="directory">
+                <div class="directory-header">
+                    <h2 class="section-title" style="margin-bottom: 0;">Directorio</h2>
+                    <input class="search-box" id="user-search" type="search" placeholder="Buscar por usuario, correo o rol">
+                </div>
+                <div id="users-list" class="user-list">
+                    <div class="empty-state">Cargando usuarios...</div>
+                </div>
+            </section>
+        </section>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="edit-modal" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Editar usuario</h2>
+                    <p id="edit-username-label" style="color: var(--muted); margin-top: 6px;"></p>
+                </div>
+                <button class="secondary-btn" type="button" onclick="closeEditModal()">Cerrar</button>
+            </div>
+
+            <form id="edit-user-form" class="form-grid">
+                <input type="hidden" id="edit-username">
+                <div class="field">
+                    <label for="edit-email">Correo</label>
+                    <input id="edit-email" type="email">
+                </div>
+                <div class="field">
+                    <label for="edit-full-name">Nombre completo</label>
+                    <input id="edit-full-name" type="text">
+                </div>
+                <div class="field">
+                    <label for="edit-role">Rol</label>
+                    <select id="edit-role">
+                        <option value="admin">Admin / Custodio</option>
+                        <option value="operativo">Operativo</option>
+                        <option value="auditor">Auditor / Dirección</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="edit-status">Estado</label>
+                    <select id="edit-status">
+                        <option value="activo">Activo</option>
+                        <option value="deshabilitado">Deshabilitado</option>
+                        <option value="congelado">Congelado</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button class="secondary-btn" type="button" onclick="closeEditModal()">Cancelar</button>
+                    <button class="primary-btn" type="submit">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/rbac.js"></script>
+    <script>
+        const token = SafyraAuth.getTokenOrRedirect();
+        const AUTH_HEADER = SafyraAuth.getAuthHeader();
+        let currentUser = null;
+        let usersCache = [];
+
+        const form = document.getElementById('create-user-form');
+        const formMessage = document.getElementById('form-message');
+        const usersList = document.getElementById('users-list');
+        const searchInput = document.getElementById('user-search');
+        const editModal = document.getElementById('edit-modal');
+        const editForm = document.getElementById('edit-user-form');
+
+        function logout() {
+            SafyraAuth.logout();
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            themeIcon.textContent = newTheme === 'light' ? '☀️' : '🌙';
+            themeText.textContent = newTheme === 'light' ? 'Modo Claro' : 'Modo Oscuro';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            document.getElementById('theme-icon').textContent = savedTheme === 'light' ? '☀️' : '🌙';
+            document.getElementById('theme-text').textContent = savedTheme === 'light' ? 'Modo Claro' : 'Modo Oscuro';
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function roleLabel(role) {
+            return {
+                admin: 'Admin / Custodio',
+                operativo: 'Operativo',
+                auditor: 'Auditor / Dirección',
+            }[role] || role;
+        }
+
+        function showMessage(text, type) {
+            formMessage.textContent = text;
+            formMessage.className = `message ${type} show`;
+        }
+
+        function updateMetrics(users) {
+            document.getElementById('metric-total').textContent = users.length;
+            document.getElementById('metric-active').textContent = users.filter(user => user.status === 'activo').length;
+            document.getElementById('metric-frozen').textContent = users.filter(user => user.status === 'congelado').length;
+            document.getElementById('metric-admins').textContent = users.filter(user => user.role === 'admin').length;
+        }
+
+        function filteredUsers() {
+            const query = searchInput.value.trim().toLowerCase();
+            if (!query) return usersCache;
+            return usersCache.filter((user) => {
+                return [user.username, user.email, user.full_name, user.role, user.status]
+                    .join(' ')
+                    .toLowerCase()
+                    .includes(query);
+            });
+        }
+
+        function renderUsers() {
+            const users = filteredUsers();
+            updateMetrics(usersCache);
+
+            if (!users.length) {
+                usersList.innerHTML = '<div class="empty-state">No hay usuarios para mostrar.</div>';
+                return;
+            }
+
+            usersList.innerHTML = users.map((user) => `
+                <article class="user-row">
+                    <div>
+                        <div class="user-name">${escapeHtml(user.full_name || user.username)}</div>
+                        <div class="user-email">${escapeHtml(user.email || 'Sin correo')}</div>
+                        <div class="user-email">${escapeHtml(user.username)}</div>
+                    </div>
+                    <div><span class="pill ${escapeHtml(user.role)}">${escapeHtml(roleLabel(user.role))}</span></div>
+                    <div><span class="pill ${escapeHtml(user.status)}">${escapeHtml(user.status)}</span></div>
+                    <div>
+                        <button class="secondary-btn" type="button" data-edit-user="${escapeHtml(user.username)}">Editar</button>
+                    </div>
+                </article>
+            `).join('');
+
+            document.querySelectorAll('[data-edit-user]').forEach((button) => {
+                button.addEventListener('click', () => openEditModal(button.getAttribute('data-edit-user')));
+            });
+        }
+
+        async function loadUsers() {
+            const response = await fetch('/admin/users', { headers: AUTH_HEADER });
+            if (SafyraAuth.handleProtectedResponse(response)) return;
+            if (!response.ok) {
+                throw new Error('No se pudo cargar la lista de usuarios');
+            }
+            usersCache = await response.json();
+            renderUsers();
+        }
+
+        function openEditModal(username) {
+            const user = usersCache.find(item => item.username === username);
+            if (!user) return;
+
+            document.getElementById('edit-username').value = user.username;
+            document.getElementById('edit-username-label').textContent = user.username;
+            document.getElementById('edit-email').value = user.email || '';
+            document.getElementById('edit-full-name').value = user.full_name || '';
+            document.getElementById('edit-role').value = user.role;
+            document.getElementById('edit-status').value = user.status;
+            editModal.classList.add('active');
+            editModal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeEditModal() {
+            editModal.classList.remove('active');
+            editModal.setAttribute('aria-hidden', 'true');
+        }
+
+        async function updateUser(payload) {
+            const username = payload.username;
+            delete payload.username;
+            const response = await fetch(`/admin/users/${encodeURIComponent(username)}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...AUTH_HEADER,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (SafyraAuth.handleProtectedResponse(response)) return false;
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                alert(`Error al actualizar usuario: ${data.detail || response.statusText}`);
+                return false;
+            }
+            await loadUsers();
+            return true;
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const payload = {
+                username: formData.get('username'),
+                email: formData.get('email'),
+                full_name: formData.get('full_name'),
+                password: formData.get('password'),
+                role: formData.get('role'),
+                status: formData.get('status'),
+            };
+
+            const response = await fetch('/admin/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...AUTH_HEADER,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (SafyraAuth.handleProtectedResponse(response)) return;
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                showMessage(data.detail || 'No se pudo crear el usuario', 'error');
+                return;
+            }
+
+            showMessage(`Usuario ${data.username} creado correctamente.`, 'ok');
+            form.reset();
+            await loadUsers();
+        });
+
+        editForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const ok = await updateUser({
+                username: document.getElementById('edit-username').value,
+                email: document.getElementById('edit-email').value,
+                full_name: document.getElementById('edit-full-name').value,
+                role: document.getElementById('edit-role').value,
+                status: document.getElementById('edit-status').value,
+            });
+            if (ok) closeEditModal();
+        });
+
+        searchInput.addEventListener('input', renderUsers);
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            currentUser = await SafyraAuth.requireRoles(['admin'], { redirectByRole: { operativo: '/', auditor: '/history' } });
+            if (!currentUser) return;
+            loadTheme();
+            await loadUsers();
+        });
+    </script>
+</body>
+</html>

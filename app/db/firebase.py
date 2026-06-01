@@ -4,48 +4,57 @@ from dotenv import load_dotenv
 import os
 import json
 import base64  # Importar base64
-from typing import List, Dict
+import binascii
+from typing import Any, Dict, List, Optional
 from datetime import datetime
-
-# ==================================
 import io
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils import get_column_letter
-# ==================================
 
-# --- ¡¡AQUÍ ESTÁ LA CORRECCIÓN!! ---
-# Solo cargar .env si NO estamos en Vercel (para desarrollo local)
 if os.getenv("VERCEL") != "1":
     print("Cargando variables de entorno desde .env (Modo Local)...")
-    load_dotenv()
+    load_dotenv(override=os.getenv("SKIP_FIREBASE_INIT", "false").lower() not in {"1", "true", "yes"})
 else:
     print("Saltando load_dotenv() (Modo Vercel)...")
-# --- FIN DE LA CORRECCIÓN ---
-
 
 # ======================================================================
 # INICIALIZACIÓN DE FIREBASE (Modificado para Base64)
 # ======================================================================
 
+skip_firebase_init = os.getenv("SKIP_FIREBASE_INIT", "false").lower() in {"1", "true", "yes"}
 database_url = os.getenv("FIREBASE_DATABASE_URL")
-cred_json_content = os.getenv("FIREBASE_PRIVATE_KEY_JSON") # Esto es el texto Base64
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
-if not database_url:
+if not skip_firebase_init and not database_url:
     raise ValueError("ERROR FATAL: FIREBASE_DATABASE_URL no está configurada en el entorno.")
 
-if not firebase_admin._apps:
+
+def _load_service_account_from_env() -> Optional[dict[str, Any]]:
+    cred_json_base64 = os.getenv("FIREBASE_PRIVATE_KEY_JSON_BASE64")
+    cred_json_raw = os.getenv("FIREBASE_PRIVATE_KEY_JSON")
+
+    if cred_json_base64:
+        decoded_json_string = base64.b64decode(cred_json_base64).decode("utf-8")
+        return json.loads(decoded_json_string)
+
+    if cred_json_raw:
+        try:
+            decoded_json_string = base64.b64decode(cred_json_raw, validate=True).decode("utf-8")
+            return json.loads(decoded_json_string)
+        except (binascii.Error, UnicodeDecodeError, json.JSONDecodeError):
+            return json.loads(cred_json_raw)
+
+    return None
+
+if skip_firebase_init:
+    print("Saltando inicialización de Firebase por configuración de entorno.")
+elif not firebase_admin._apps:
     try:
         cred = None
-        if cred_json_content:
-            print("Inicializando Firebase con credenciales JSON (Modo Vercel)...")
-            
-            # Decodifica el string Base64 a un string JSON normal
-            print("Decodificando credenciales Base64...")
-            decoded_json_string = base64.b64decode(cred_json_content).decode('utf-8')
-            service_account_info = json.loads(decoded_json_string)
-            
+        service_account_info = _load_service_account_from_env()
+        if service_account_info:
+            print("Inicializando Firebase con credenciales JSON desde variable de entorno...")
             cred = credentials.Certificate(service_account_info)
             
         elif cred_path:
@@ -54,7 +63,7 @@ if not firebase_admin._apps:
                 raise FileNotFoundError(f"El archivo de credenciales no se encuentra en la ruta: {cred_path}")
             cred = credentials.Certificate(cred_path)
         else:
-            raise ValueError("No se encontró 'FIREBASE_PRIVATE_KEY_JSON' ni 'FIREBASE_CREDENTIALS_PATH'. Revisa tu .env")
+            raise ValueError("No se encontró 'FIREBASE_PRIVATE_KEY_JSON_BASE64', 'FIREBASE_PRIVATE_KEY_JSON' ni 'FIREBASE_CREDENTIALS_PATH'. Revisa tu .env")
 
         firebase_admin.initialize_app(cred, {
             'databaseURL': database_url

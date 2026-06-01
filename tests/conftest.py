@@ -6,17 +6,80 @@ Incluye fixtures compartidos y configuración de pytest
 
 import pytest
 import os
+import secrets
 from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch
 from datetime import datetime
+from passlib.context import CryptContext
 
 # Configurar variables de entorno ANTES de importar la app
+TEST_ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD") or secrets.token_urlsafe(24)
+TEST_OPERATIVO_PASSWORD = secrets.token_urlsafe(24)
+TEST_AUDITOR_PASSWORD = secrets.token_urlsafe(24)
+TEST_CONGELADO_PASSWORD = secrets.token_urlsafe(24)
+
 os.environ["VERCEL"] = "0"  # Simular ambiente local
-os.environ["FIREBASE_DATABASE_URL"] = "https://safyrashield-default-rtdb.firebaseio.com"
-os.environ["FIREBASE_CREDENTIALS_PATH"] = "Safyra_Shield_Firebase.json"
+os.environ["SKIP_FIREBASE_INIT"] = "1"
+os.environ["AUTH_PROVIDER"] = "local"
+os.environ["ALLOW_LEGACY_PASSWORD_LOGIN"] = "true"
+os.environ["FIREBASE_DATABASE_URL"] = "https://example.test/firebase"
+os.environ["JWT_SECRET_KEY"] = "test-jwt-secret-key"
+os.environ["ADMIN_USERNAME"] = "admin"
+os.environ["ADMIN_EMAIL"] = "admin@example.test"
+os.environ["ADMIN_FULL_NAME"] = "Admin Test"
+os.environ["ADMIN_ROLE"] = "admin"
+os.environ["ADMIN_STATUS"] = "activo"
+os.environ["ADMIN_FIREBASE_UID"] = ""
+os.environ["ADMIN_PASSWORD_HASH"] = CryptContext(schemes=["bcrypt"], deprecated="auto").hash(
+    TEST_ADMIN_PASSWORD
+)
+os.environ["TEST_ADMIN_PASSWORD"] = TEST_ADMIN_PASSWORD
+os.environ["TERMS_VERSION"] = "2026-test"
+os.environ["TERMS_REQUIRED_ROLES"] = "admin,operativo,auditor"
 
 from app.main import app
-from app.routers.auth_api import create_access_token
+from app.routers.auth_api import create_access_token, fake_users_db, fake_consent_db, pwd_context, TERMS_VERSION
+
+fake_users_db.update({
+    "operativo": {
+        "username": "operativo",
+        "full_name": "Usuario Operativo",
+        "email": "operativo@example.test",
+        "role": "operativo",
+        "status": "activo",
+        "disabled": False,
+        "hashed_password": pwd_context.hash(TEST_OPERATIVO_PASSWORD),
+    },
+    "auditor": {
+        "username": "auditor",
+        "full_name": "Usuario Auditor",
+        "email": "auditor@example.test",
+        "role": "auditor",
+        "status": "activo",
+        "disabled": False,
+        "hashed_password": pwd_context.hash(TEST_AUDITOR_PASSWORD),
+    },
+    "congelado": {
+        "username": "congelado",
+        "full_name": "Usuario Congelado",
+        "email": "congelado@example.test",
+        "role": "operativo",
+        "status": "congelado",
+        "disabled": False,
+        "hashed_password": pwd_context.hash(TEST_CONGELADO_PASSWORD),
+    },
+})
+
+for username, user_record in fake_users_db.items():
+    if user_record.get("status") == "activo":
+        fake_consent_db[username] = [{
+            "username": username,
+            "uid": user_record.get("uid", ""),
+            "role": user_record["role"],
+            "terms_version": TERMS_VERSION,
+            "accepted_at": datetime.utcnow().isoformat(),
+            "event_type": "terms_acceptance",
+        }]
 
 
 @pytest.fixture(scope="session")
@@ -28,13 +91,34 @@ def test_client():
 @pytest.fixture(scope="function")
 def token_valido():
     """Token JWT válido para pruebas"""
-    return create_access_token(data={"sub": "admin"})
+    return create_access_token(data={"sub": "admin", "role": "admin"})
 
 
 @pytest.fixture(scope="function")
 def headers_autenticados(token_valido):
     """Headers con autenticación válida"""
     return {"Authorization": f"Bearer {token_valido}"}
+
+
+@pytest.fixture(scope="function")
+def headers_operativo():
+    """Headers con autenticación de usuario operativo"""
+    token = create_access_token(data={"sub": "operativo", "role": "operativo"})
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="function")
+def headers_auditor():
+    """Headers con autenticación de usuario auditor"""
+    token = create_access_token(data={"sub": "auditor", "role": "auditor"})
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="function")
+def headers_congelado():
+    """Headers de usuario no activo"""
+    token = create_access_token(data={"sub": "congelado", "role": "operativo"})
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture(scope="function")
@@ -122,4 +206,4 @@ def pytest_configure(config):
 def pytest_runtest_makereport(item, call):
     """Genera reportes personalizados"""
     if call.when == "call":
-        print(f"\n✅ Prueba completada: {item.name}")
+        print(f"\nOK Prueba completada: {item.name}")

@@ -35,6 +35,7 @@
             color: var(--text-primary); transition: background 0.3s ease, color 0.3s ease;
             position: relative; overflow-x: hidden;
         }
+        [hidden] { display: none !important; }
         body::before {
             content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 20% 50%, rgba(0, 245, 255, 0.03) 0%, transparent 50%),
@@ -73,6 +74,12 @@
             text-decoration: none; font-size: 0.95em;
         }
         .theme-toggle:hover, .nav-btn:hover { border-color: var(--border-glow); box-shadow: var(--shadow-intense); transform: translateY(-2px); }
+
+        .role-chip {
+            cursor: default;
+            border-color: var(--border-glow);
+            color: var(--accent-primary);
+        }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- Métricas Visuales --- */
@@ -257,27 +264,111 @@
         }
         .footer { text-align: center; padding: 30px; margin-top: 30px; border-top: 2px solid var(--border-color); color: var(--text-muted); }
         .footer p { font-size: 0.9em; font-style: italic; }
+
+        .workspace { min-width: 0; padding: 28px 32px 42px; }
+        .workspace .container { max-width: 1320px; }
+        .header { min-height: auto; padding: 22px 28px; margin-bottom: 20px; border-radius: 22px; background: rgba(255,255,255,.82); box-shadow: 0 18px 42px rgba(31,48,68,.08); animation: none; }
+        body[data-theme="dark"] .header { background: rgba(18,28,48,.88); }
+        .header::before, body::before, .logo-icon { display: none; }
+        .logo-text h1 { font-size: clamp(1.9rem, 2.6vw, 2.45rem); color: #175db6; background: none; -webkit-text-fill-color: initial; text-shadow: none; }
+        body[data-theme="dark"] .logo-text h1 { color: var(--accent-primary); }
+        .theme-toggle, .nav-btn { min-height: 42px; border-radius: 12px; border: 1px solid rgba(31,48,68,.14); background: rgba(255,255,255,.74); box-shadow: 0 8px 22px rgba(31,48,68,.08); }
+        .theme-toggle #theme-icon { display: none; }
+        .role-chip { background: #0d2440 !important; color: #fff !important; border-color: #0d2440 !important; box-shadow: 0 12px 24px rgba(13,36,64,.18) !important; gap: 8px; }
+        .role-chip::before { content: "Rol"; color: #9ac7ff; font-size: .72rem; font-weight: 800; text-transform: uppercase; margin-right: 6px; letter-spacing: 0; }
+        .summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+        .stat-card, .history-controls, .table-section { border-radius: 18px; background: rgba(255,255,255,.84); border: 1px solid rgba(31,48,68,.14); box-shadow: 0 18px 42px rgba(31,48,68,.08); animation: none; }
+        body[data-theme="dark"] .stat-card, body[data-theme="dark"] .history-controls, body[data-theme="dark"] .table-section { background: rgba(18,28,48,.82); border-color: rgba(255,255,255,.10); }
+        .stat-card.warning { border-color: rgba(31,48,68,.14); box-shadow: 0 18px 42px rgba(31,48,68,.08); }
+        .stat-icon { display: none; }
+        .stat-value { color: #175db6; text-shadow: none; }
+        body[data-theme="dark"] .stat-value { color: var(--accent-primary); }
+        .table-title { color: #175db6; text-shadow: none; background: none; -webkit-text-fill-color: initial; }
+        .table-wrapper { background: rgba(247,250,252,.75); }
+        body[data-theme="dark"] .table-wrapper { background: rgba(255,255,255,.04); }
+        .btn-filter { background: #3324d5; box-shadow: none; }
+        .mobile-nav { display: none !important; }
         
         @media (max-width: 992px) { .history-controls { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 980px) {
+            .app-shell { grid-template-columns: 1fr; }
+            .sidebar { position: relative; height: auto; padding: 18px; border-right: 0; border-bottom: 1px solid rgba(31,48,68,.12); }
+            .sidebar-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .workspace { padding: 18px; }
+        }
         @media (max-width: 768px) {
-            body { padding: 15px; } .header { padding: 20px; } .logo-text h1 { font-size: 1.8em; }
+            body { padding: 0; } .header { padding: 20px; } .logo-text h1 { font-size: 1.8em; }
+            .sidebar-nav { grid-template-columns: 1fr 1fr; }
             .header-controls { flex-direction: column; width: 100%; }
             .theme-toggle, .nav-btn { width: 100%; justify-content: center; }
             .history-controls { grid-template-columns: 1fr; }
             .summary-grid { grid-template-columns: 1fr; }
         }
     </style>
+    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260601-5">
 </head>
-<body data-theme="dark">
+<body data-theme="light">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <img class="sidebar-logo-img" src="/static/img/safyrashield-logo.png" alt="SafyraShield IoT" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
+                <span class="sidebar-logo-fallback" hidden>S</span>
+                <div>
+                    <strong>SafyraShield IoT</strong>
+                    <span>Monitoreo inteligente</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" aria-label="Navegaci&oacute;n principal">
+                <div class="sidebar-section-label">Navegaci&oacute;n</div>
+                <a class="sidebar-link" href="/" data-roles="admin,operativo">
+                    <span class="sidebar-icon" aria-hidden="true">DB</span>
+                    <span class="sidebar-copy">
+                        <strong>Dashboard</strong>
+                        <small>Lectura por sal&oacute;n</small>
+                    </span>
+                </a>
+                <a class="sidebar-link active" href="/alerts">
+                    <span class="sidebar-icon" aria-hidden="true">AL</span>
+                    <span class="sidebar-copy">
+                        <strong>Alertas</strong>
+                        <small>Eventos cr&iacute;ticos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/history" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">HI</span>
+                    <span class="sidebar-copy">
+                        <strong>Historial</strong>
+                        <small>Registros el&eacute;ctricos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/users" data-roles="admin">
+                    <span class="sidebar-icon" aria-hidden="true">US</span>
+                    <span class="sidebar-copy">
+                        <strong>Usuarios</strong>
+                        <small>Roles y estados</small>
+                    </span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-session">
+                    <span class="sidebar-user-icon" aria-hidden="true">US</span>
+                    <span class="sidebar-user-copy">
+                        <strong data-user-label>Validando usuario...</strong>
+                        <small data-role-badge>Validando rol...</small>
+                    </span>
+                </div>
+                <button class="sidebar-action logout" type="button" onclick="logout()">Cerrar sesi&oacute;n</button>
+            </div>
+        </aside>
 
-    <div class="container">
+        <main class="workspace">
+            <div class="container">
         <header class="header">
             <div class="header-content">
                 <div class="logo-section">
-                    <div class="logo-icon">⚡</div>
                     <div class="logo-text">
-                        <h1>SafyraShield</h1>
-                        <p>Monitor Inteligente de Consumo Eléctrico</p>
+                        <h1>Registro de Alertas</h1>
+                        <p>Bitácora de sobrecargas y eventos eléctricos por salón</p>
                     </div>
                 </div>
                 
@@ -287,12 +378,22 @@
                         <span id="theme-text">Modo Oscuro</span>
                     </button>
                     
-                    <a href="/" class="nav-btn">
-                        🏠 Volver al Dashboard
+                    <span class="nav-btn role-chip" data-role-badge>Validando rol...</span>
+
+                    <a href="/" class="nav-btn mobile-nav" data-roles="admin,operativo">
+                        Dashboard
+                    </a>
+
+                    <a href="/history" class="nav-btn mobile-nav" data-roles="admin,auditor">
+                        Historial
+                    </a>
+
+                    <a href="/users" class="nav-btn mobile-nav" data-roles="admin">
+                        Usuarios
                     </a>
                     
-                    <button class="nav-btn" onclick="logout()">
-                        🔒 Cerrar Sesión
+                    <button class="nav-btn mobile-nav" onclick="logout()">
+                        Cerrar sesión
                     </button>
                 </div>
             </div>
@@ -310,7 +411,7 @@
             <div class="stat-card warning">
                 <div class="stat-icon">📍</div>
                 <div class="stat-info">
-                    <h3>Sensor Problemático</h3>
+                    <h3>Salón con más alertas</h3>
                     <div class="stat-value" id="top-sensor">--</div>
                 </div>
             </div>
@@ -326,7 +427,7 @@
             <div class="stat-card warning">
                 <div class="stat-icon">🖥️</div>
                 <div class="stat-info">
-                    <h3>Dispositivo Frecuente</h3>
+                    <h3>Tipo frecuente</h3>
                     <div class="stat-value" id="top-device">--</div>
                 </div>
             </div>
@@ -357,7 +458,7 @@
                         <tr>
                             <th>Nivel</th>
                             <th>Fecha y Hora</th>
-                            <th>Sensor</th>
+                            <th>Salón</th>
                             <th>Evento</th>
                             <th>Acción</th>
                         </tr>
@@ -383,6 +484,8 @@
         <footer class="footer">
             <p id="last-update">Página de bitácora de alertas</p>
         </footer>
+            </div>
+        </main>
     </div>
 
     <div class="modal" id="alert-detail-modal">
@@ -394,7 +497,7 @@
             <div class="modal-body">
                 <div class="detail-grid">
                     <div class="detail-item">
-                        <label>Sensor</label>
+                        <label>Salón</label>
                         <div class="value" id="modal-sensor-id">--</div>
                     </div>
                     <div class="detail-item">
@@ -423,27 +526,24 @@
                     <strong>Análisis:</strong> La alerta se generó porque la corriente medida 
                     (<strong id="modal-irms-info">--</strong>) superó el umbral 
                     (<strong id="modal-threshold-info">--</strong>) 
-                    establecido para este sensor.
+                    establecido para este salón.
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="/static/js/rbac.js"></script>
     <script>
         // ======================================================================
         // SEGURIDAD Y AUTENTICACIÓN
         // ======================================================================
         
-        const token = localStorage.getItem('safyraToken');
-        if (!token) {
-            console.warn("⚠️ No hay token de autenticación. Redirigiendo a login...");
-            window.location.href = '/login';
-        }
-        const AUTH_HEADER = { 'Authorization': `Bearer ${token}` };
+        const token = SafyraAuth.getTokenOrRedirect();
+        const AUTH_HEADER = SafyraAuth.getAuthHeader();
+        let currentUser = null;
 
         function logout() {
-            localStorage.removeItem('safyraToken');
-            window.location.href = '/login';
+            SafyraAuth.logout();
         }
 
         // ======================================================================
@@ -466,7 +566,7 @@
             localStorage.setItem('theme', newTheme);
         }
         function loadTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const savedTheme = localStorage.getItem('theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
             const themeIcon = document.getElementById('theme-icon');
             const themeText = document.getElementById('theme-text');
@@ -497,6 +597,15 @@
         let allAlertData = []; // Almacena TODOS los datos
         let currentPage = 1;
         const ROWS_PER_PAGE = 15; // Mostrar 15 alertas por página
+        const ROOM_CONFIG = {
+            "LAB-PC-01": "Laboratorio de Cómputo 01",
+            "LAB-PC-02": "Laboratorio de Cómputo 02",
+            "LAB-PC-03": "Laboratorio de Cómputo 03",
+        };
+
+        function roomName(sensorId) {
+            return ROOM_CONFIG[sensorId] || sensorId;
+        }
 
         /**
          * ¡CORREGIDO!
@@ -523,7 +632,7 @@
                 const response = await fetch(url, { headers: AUTH_HEADER });
                 
                 if (!response.ok) {
-                    if (response.status === 401) { logout(); return; }
+                    if (SafyraAuth.handleProtectedResponse(response)) return;
                     const errorData = await response.json().catch(() => ({detail: response.statusText}));
                     throw new Error(`Error al obtener alertas: ${errorData.detail || response.statusText}`);
                 }
@@ -557,7 +666,7 @@
                 return counts;
             }, {});
             const topSensor = Object.keys(sensorCounts).reduce((a, b) => sensorCounts[a] > sensorCounts[b] ? a : b, "N/A");
-            document.getElementById('top-sensor').textContent = topSensor;
+            document.getElementById('top-sensor').textContent = roomName(topSensor);
 
             const deviceCounts = alertData.reduce((counts, alert) => {
                 const deviceType = alert.device.type || "Desconocido";
@@ -620,7 +729,7 @@
                         ${level.toUpperCase()}
                     </td>
                     <td>${timestamp}</td>
-                    <td><strong>${record.sensor_id}</strong></td>
+                    <td><strong>${roomName(record.sensor_id)}</strong></td>
                     <td>${eventMessage}</td>
                     <td></td>
                 `;
@@ -646,11 +755,11 @@
             const irmsVal = record.irms.toFixed(3) + " A";
             const thresholdVal = record.threshold.corriente.toFixed(1) + " A";
 
-            document.getElementById('modal-sensor-id').textContent = record.sensor_id;
+            document.getElementById('modal-sensor-id').textContent = roomName(record.sensor_id);
             document.getElementById('modal-timestamp').textContent = timestamp;
             document.getElementById('modal-irms').textContent = irmsVal;
             document.getElementById('modal-threshold').textContent = thresholdVal;
-            document.getElementById('modal-device').textContent = `${record.device.icon} ${record.device.type}`;
+            document.getElementById('modal-device').textContent = record.device.type || "No especificado";
             document.getElementById('modal-irms-info').textContent = irmsVal;
             
             // ¡¡AQUÍ ESTÁ LA CORRECCIÓN DEL BUG!!
@@ -667,8 +776,12 @@
         // ======================================================================
         // INICIALIZACIÓN
         // ======================================================================
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", async function() {
             console.log('🚀 SafyraShield Premium - Inicializando Página de Bitácora de Alertas');
+
+            currentUser = await SafyraAuth.requireRoles(['admin', 'operativo', 'auditor']);
+            if (!currentUser) return;
+
             loadTheme();
             
             filterBtn.addEventListener('click', fetchAlerts);

@@ -25,6 +25,10 @@ app.include_router(auth_router)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
+@app.get("/terms")
+async def terms_page(request: Request):
+    return templates.TemplateResponse("terms.html", {"request": request})
+
 @app.get("/")
 async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -36,6 +40,10 @@ async def history_page(request: Request):
 @app.get("/alerts")
 async def alerts_page(request: Request):
     return templates.TemplateResponse("alerts.html", {"request": request})
+
+@app.get("/users")
+async def users_page(request: Request):
+    return templates.TemplateResponse("users.html", {"request": request})
 
 @app.get("/health")
 async def health_check():

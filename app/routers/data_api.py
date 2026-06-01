@@ -1,7 +1,6 @@
 # app/routers/data_api.py
 from fastapi import APIRouter, HTTPException, Response, Depends
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 from app.db.firebase import (
     get_current_data, 
     get_history_data, 
@@ -9,26 +8,27 @@ from app.db.firebase import (
     update_sensor_threshold,
     export_history_csv,
     export_history_excel,
-    get_alert_history # <-- ¡NUEVA IMPORTACIÓN!
+    get_alert_history 
 )
-from app.routers.auth_api import get_current_user
+from app.routers.auth_api import require_roles
 from app.models.data import ThresholdUpdate
 import io
 
-# ======================================================================
-# CONFIGURACIÓN DEL ROUTER (¡PROTEGIDO!)
-# ======================================================================
+ADMIN_ROLE = "admin"
+OPERATIVE_ROLE = "operativo"
+AUDITOR_ROLE = "auditor"
+
+CURRENT_DATA_ROLES = (ADMIN_ROLE, OPERATIVE_ROLE)
+ALERT_ROLES = (ADMIN_ROLE, OPERATIVE_ROLE, AUDITOR_ROLE)
+REPORT_ROLES = (ADMIN_ROLE, AUDITOR_ROLE)
+ADMIN_ROLES = (ADMIN_ROLE,)
+
 router = APIRouter(
     prefix="/data", 
     tags=["data"],
-    dependencies=[Depends(get_current_user)]
 )
 
-# ======================================================================
-# ENDPOINTS EXISTENTES (Ahora protegidos)
-# ======================================================================
-
-@router.get("/current")
+@router.get("/current", dependencies=[Depends(require_roles(*CURRENT_DATA_ROLES))])
 async def read_current_data():
     """
     Endpoint para obtener datos actuales con detección de dispositivos
@@ -37,7 +37,7 @@ async def read_current_data():
     result = get_current_data()
     return result
 
-@router.get("/history/{sensor_id}")
+@router.get("/history/{sensor_id}", dependencies=[Depends(require_roles(*REPORT_ROLES))])
 async def read_history_data(
     sensor_id: str, 
     limit: int = 20,
@@ -58,7 +58,7 @@ async def read_history_data(
 # ======================================================================
 # ¡NUEVO ENDPOINT DE ALERTAS!
 # ======================================================================
-@router.get("/alerts")
+@router.get("/alerts", dependencies=[Depends(require_roles(*ALERT_ROLES))])
 async def read_alert_history(
     start_date: str = None,
     end_date: str = None
@@ -74,7 +74,7 @@ async def read_alert_history(
     }
 # ======================================================================
 
-@router.get("/connection")
+@router.get("/connection", dependencies=[Depends(require_roles(*CURRENT_DATA_ROLES))])
 async def check_connection_status():
     """
     Endpoint para verificar el estado de la conexión
@@ -86,7 +86,7 @@ async def check_connection_status():
         "message": "Sistema operativo" if is_connected else "Sistema desconectado"
     }
 
-@router.put("/threshold/{sensor_id}")
+@router.put("/threshold/{sensor_id}", dependencies=[Depends(require_roles(*ADMIN_ROLES))])
 async def update_threshold(sensor_id: str, threshold: ThresholdUpdate):
     """
     Actualizar umbral de un sensor específico (HU-005)
@@ -114,7 +114,7 @@ async def update_threshold(sensor_id: str, threshold: ThresholdUpdate):
 # ENDPOINTS DE EXPORTACIÓN (CSV y NUEVO EXCEL)
 # ======================================================================
 
-@router.get("/export/csv")
+@router.get("/export/csv", dependencies=[Depends(require_roles(*REPORT_ROLES))])
 async def export_csv(
     sensor_id: str = None,
     start_date: str = None,
@@ -139,7 +139,7 @@ async def export_csv(
         }
     )
 
-@router.get("/export/excel")
+@router.get("/export/excel", dependencies=[Depends(require_roles(*REPORT_ROLES))])
 async def export_excel(
     sensor_id: str = None,
     start_date: str = None,
@@ -164,7 +164,7 @@ async def export_excel(
         }
     )
 
-@router.get("/statistics")
+@router.get("/statistics", dependencies=[Depends(require_roles(*CURRENT_DATA_ROLES))])
 async def get_statistics():
     """
     Obtener estadísticas generales del sistema

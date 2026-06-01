@@ -217,7 +217,7 @@
                     type="text" 
                     id="username" 
                     name="username" 
-                    placeholder="Ingrese su usuario"
+                    placeholder="Ingrese su correo o usuario"
                     required
                     autocomplete="username"
                 >
@@ -242,8 +242,11 @@
 
         </div>
 
-    <script>
-        console.log("SafyraShield - Login Page v1.0");
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+        console.log("SafyraShield - Login Page v2.0");
 
         // ============================================================
         // IMPORTANTE: NO verificar token ni redirigir en esta página
@@ -252,6 +255,95 @@
         const loginForm = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
         const loginBtn = document.getElementById('login-btn');
+        let authConfig = null;
+        let firebaseAuth = null;
+
+        async function loadAuthConfig() {
+            const response = await fetch('/auth/config');
+            if (!response.ok) {
+                throw new Error('No se pudo cargar la configuracion de autenticacion');
+            }
+            authConfig = await response.json();
+            if (authConfig.provider === 'firebase' && authConfig.firebase_web_config) {
+                const firebaseApp = initializeApp(authConfig.firebase_web_config);
+                firebaseAuth = getAuth(firebaseApp);
+            }
+        }
+
+        async function loginWithFirebase(email, password) {
+            if (!firebaseAuth) {
+                throw new Error('Firebase Auth no esta configurado para el login web');
+            }
+
+            const credentials = await signInWithEmailAndPassword(firebaseAuth, email, password);
+            const idToken = await credentials.user.getIdToken(true);
+            const sessionResponse = await fetch('/auth/firebase/session', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${idToken}`
+                }
+            });
+            const sessionData = await sessionResponse.json();
+
+            if (!sessionResponse.ok) {
+                throw new Error(sessionData.detail || 'Usuario sin perfil autorizado');
+            }
+
+            localStorage.setItem('safyraToken', idToken);
+            localStorage.setItem('safyraAuthProvider', 'firebase');
+            localStorage.setItem('safyraRole', sessionData.user.role);
+            localStorage.setItem('safyraUsername', sessionData.user.username);
+            return sessionData.user.role;
+        }
+
+        async function loginWithLegacy(username, password) {
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+
+            const response = await fetch('/token', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.access_token) {
+                throw new Error(data.detail || 'Error de autenticacion');
+            }
+
+            localStorage.setItem('safyraToken', data.access_token);
+            localStorage.setItem('safyraAuthProvider', 'local');
+            localStorage.setItem('safyraRole', data.role);
+            localStorage.setItem('safyraUsername', data.username);
+            return data.role;
+        }
+
+        function homeForRole(role) {
+            if (role === 'auditor') {
+                return '/history';
+            }
+            return '/';
+        }
+
+        async function nextAfterConsent(role) {
+            const target = homeForRole(role);
+            const token = localStorage.getItem('safyraToken');
+            const response = await fetch('/consent/status', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                return `/terms?next=${encodeURIComponent(target)}`;
+            }
+            const consentStatus = await response.json();
+            if (consentStatus.requires_acceptance && !consentStatus.accepted) {
+                return `/terms?next=${encodeURIComponent(target)}`;
+            }
+            return target;
+        }
+
+        loadAuthConfig().catch((error) => {
+            console.error('Error cargando configuracion de autenticacion:', error);
+        });
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -267,33 +359,24 @@
             loginBtn.textContent = '⏳ Iniciando sesión...';
 
             try {
-                // Crear FormData para OAuth2PasswordRequestForm
-                const formData = new FormData();
-                formData.append('username', username);
-                formData.append('password', password);
-
-                const response = await fetch('/token', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.access_token) {
-                    // Guardar token en localStorage
-                    localStorage.setItem('safyraToken', data.access_token);
-                    
-                    // Mostrar éxito y redirigir
-                    loginBtn.textContent = '✅ ¡Éxito! Redirigiendo...';
-                    
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 500);
-                    
-                } else {
-                    // Mostrar error
-                    throw new Error(data.detail || 'Error de autenticación');
+                if (!authConfig) {
+                    await loadAuthConfig();
                 }
+
+                let role = null;
+                if (authConfig.provider === 'firebase') {
+                    role = await loginWithFirebase(username, password);
+                } else if (authConfig.legacy_password_login_enabled) {
+                    role = await loginWithLegacy(username, password);
+                } else {
+                    throw new Error('No hay metodo de autenticacion habilitado');
+                }
+
+                const targetUrl = await nextAfterConsent(role);
+                loginBtn.textContent = 'Exito. Redirigiendo...';
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 500);
 
             } catch (error) {
                 console.error('Error de login:', error);

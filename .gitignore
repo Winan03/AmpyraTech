@@ -1,12 +1,25 @@
-# Contenido para el archivo .gitignore
 # Ambientes virtuales
 venv/
-*.pyc
+.venv/
 
-# Directorios de caché y log
+# Python
+*.pyc
 __pycache__/
+.pytest_cache/
+
+# Logs
 *.log
 
-# Archivos de credenciales (MUY IMPORTANTE)
+# Variables de entorno y credenciales
 .env
+.env.*
+!.env.example
+firebase_env.txt
 Safyra_Shield_Firebase.json
+*firebase*.json
+*service_account*.json
+*service-account*.json
+*.pem
+*.key
+*.p12
+*.pfx
