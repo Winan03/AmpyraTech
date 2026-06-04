@@ -1,183 +1,284 @@
-import firebase_admin
-from firebase_admin import credentials, db
-from dotenv import load_dotenv
+import argparse
 import os
-import json
-import base64
-import binascii
-import time
 import random
-from datetime import datetime
-from typing import Any, Optional
+import time
+from dataclasses import dataclass
+from typing import Any
 
-# --- CONFIGURACIÓN DE SIMULACIÓN ---
-SENSOR_IDS = ["LAB-PC-01", "LAB-PC-02", "LAB-PC-03"]
-UPDATE_INTERVAL_SECONDS = 3 # Intervalo de actualización (igual que tu dashboard)
-SCENARIO_DURATION_SECONDS = 30 # Duración de cada escenario
-# -----------------------------------
+import requests
+from dotenv import load_dotenv
 
-def load_service_account_from_env() -> Optional[dict[str, Any]]:
-    cred_json_base64 = os.getenv("FIREBASE_PRIVATE_KEY_JSON_BASE64")
-    cred_json_raw = os.getenv("FIREBASE_PRIVATE_KEY_JSON")
+DEFAULT_BACKEND_URL = "http://127.0.0.1:8000"
+DEFAULT_TIMEOUT_SECONDS = 30.0
+DEFAULT_BRANCH_COUNT = 10
+VOLTAGE = 220.0
+DEMO_SEQUENCE = ["both_off", "out_of_schedule", "branch_overload"]
+SUPPORTED_SCENARIOS = [
+    "both_off",
+    "one_idle",
+    "one_workload",
+    "two_idle",
+    "two_workload",
+    "out_of_schedule",
+    "room_normal",
+    "branch_overload",
+    "mixed_alerts",
+    "room_overload",
+    "idle",
+    "normal",
+    "overload",
+]
 
-    if cred_json_base64:
-        decoded_json_string = base64.b64decode(cred_json_base64).decode("utf-8")
-        return json.loads(decoded_json_string)
-
-    if cred_json_raw:
-        try:
-            decoded_json_string = base64.b64decode(cred_json_raw, validate=True).decode("utf-8")
-            return json.loads(decoded_json_string)
-        except (binascii.Error, UnicodeDecodeError, json.JSONDecodeError):
-            return json.loads(cred_json_raw)
-
-    return None
+SCENARIO_ALIASES = {
+    "idle": "both_off",
+    "normal": "room_normal",
+    "overload": "branch_overload",
+}
 
 
-def initialize_firebase() -> None:
-    """
-    Se conecta a Firebase usando las mismas credenciales que tu main.py.
-    """
-    load_dotenv() # Carga el archivo .env
+@dataclass(frozen=True)
+class BranchProfile:
+    sensor_id: str
+    pc_start: int
+    pc_end: int
+    source: str
 
-    database_url = os.getenv("FIREBASE_DATABASE_URL")
-    cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+    @property
+    def label(self) -> str:
+        return f"{self.sensor_id} (PC {self.pc_start:02d}-{self.pc_end:02d})"
 
-    if not database_url:
-        raise ValueError("ERROR FATAL: FIREBASE_DATABASE_URL no está configurada en el .env.")
+    @property
+    def circuit_label(self) -> str:
+        return f"{self.label} - {self.source}"
 
-    if not firebase_admin._apps:
-        try:
-            cred = None
-            service_account_info = load_service_account_from_env()
-            if service_account_info:
-                print("Simulador: Inicializando Firebase con credenciales JSON desde variable de entorno...")
-                cred = credentials.Certificate(service_account_info)
-            elif cred_path:
-                print(f"Simulador: Inicializando Firebase con ruta de archivo: {cred_path} (Modo Local)...")
-                if not os.path.exists(cred_path):
-                    raise FileNotFoundError(f"El archivo de credenciales no se encuentra en la ruta: {cred_path}")
-                cred = credentials.Certificate(cred_path)
-            else:
-                raise ValueError("No se encontró 'FIREBASE_PRIVATE_KEY_JSON_BASE64', 'FIREBASE_PRIVATE_KEY_JSON' ni 'FIREBASE_CREDENTIALS_PATH'.")
 
-            firebase_admin.initialize_app(cred, {
-                'databaseURL': database_url
-            })
-            print("Simulador: Firebase initialized successfully.")
-            
-        except Exception as e:
-            print(f"Simulador: Failed to initialize Firebase: {str(e)}")
-            exit(1)
+def _parse_csv(raw_value: str) -> list[str]:
+    return [value.strip() for value in raw_value.split(",") if value.strip()]
 
-def get_scenario_data(sensor_id: str, scenario_index: int) -> tuple[float, float, str]:
-    """
-    Genera los datos de simulación basados en el escenario actual.
-    """
-    
-    # Escenario 1: Todos los sensores en estado NORMAL
-    if scenario_index == 1:
-        irms = random.uniform(0.5, 2.5) # Consumo normal (ej. Laptop)
-        estado = "Normal"
 
-    # Escenario 2: ¡SOBRECARGA en LAB-PC-01!
-    elif scenario_index == 2:
-        if sensor_id == "LAB-PC-01":
-            irms = random.uniform(12.0, 14.5) # ¡PICO ALTO! (Umbral es 11.0A)
-            estado = "Sobrecarga"
-        else:
-            irms = random.uniform(0.5, 1.5) # Los otros están normales
-            estado = "Normal"
-            
-    # Escenario 3: ¡SOBRECARGA en LAB-PC-03 y PC-02!
-    elif scenario_index == 3:
-        if sensor_id == "LAB-PC-01":
-            irms = random.uniform(0.1, 0.5) # PC-01 se resolvió
-            estado = "Normal"
-        else:
-            irms = random.uniform(11.5, 13.0) # ¡PICO ALTO en los otros dos!
-            estado = "Sobrecarga"
-            
-    # Escenario 4: Todos vuelven a la normalidad
-    else:
-        irms = random.uniform(0.1, 0.8) # Consumo bajo
-        estado = "Normal"
+def _parse_scenario_sequence(raw_value: str) -> list[str]:
+    scenarios = _parse_csv(raw_value)
+    unsupported = [scenario for scenario in scenarios if scenario not in SUPPORTED_SCENARIOS]
+    if unsupported:
+        raise ValueError(f"Escenarios no soportados: {', '.join(unsupported)}")
+    return scenarios
 
-    potencia = irms * 220 # Asumimos 220V
-    return irms, potencia, estado
+
+def _default_branch_ids() -> list[str]:
+    return [f"C-{index:02d}" for index in range(1, DEFAULT_BRANCH_COUNT + 1)]
+
+
+def _branch_ids() -> list[str]:
+    raw_value = os.getenv("SIMULATED_BRANCH_IDS") or os.getenv("MONITORED_SENSOR_IDS", "")
+    branch_ids = _parse_csv(raw_value) if raw_value else _default_branch_ids()
+    if branch_ids == ["LAB-PC-01"]:
+        return _default_branch_ids()
+    return branch_ids
+
+
+def _physical_branch_id() -> str:
+    return os.getenv("PHYSICAL_BRANCH_ID", "C-01").strip() or "C-01"
+
+
+def _branch_profiles() -> list[BranchProfile]:
+    physical_branch_id = _physical_branch_id()
+    profiles: list[BranchProfile] = []
+    for index, sensor_id in enumerate(_branch_ids(), start=1):
+        profiles.append(
+            BranchProfile(
+                sensor_id=sensor_id,
+                pc_start=(index - 1) * 2 + 1,
+                pc_end=index * 2,
+                source="Prototipo fisico" if sensor_id == physical_branch_id else "Simulado",
+            )
+        )
+    return profiles
+
+
+def _backend_url() -> str:
+    return os.getenv("SAFYRA_BACKEND_URL", DEFAULT_BACKEND_URL).rstrip("/")
+
+
+def _request_timeout_seconds() -> float:
+    raw_value = os.getenv("IOT_SIMULATOR_TIMEOUT_SECONDS", str(int(DEFAULT_TIMEOUT_SECONDS)))
+    try:
+        return max(1.0, float(raw_value))
+    except ValueError:
+        return DEFAULT_TIMEOUT_SECONDS
+
+
+def _response_detail(response: requests.Response) -> str:
+    try:
+        return str(response.json())
+    except ValueError:
+        return response.text.strip() or response.reason
+
+
+def _reading_range(profile_name: str) -> tuple[float, float]:
+    ranges = {
+        "both_off": (0.125, 0.145),
+        "one_idle": (0.165, 0.190),
+        "one_workload": (0.195, 0.220),
+        "two_idle": (0.205, 0.240),
+        "two_workload": (0.245, 0.285),
+        "high_use": (0.320, 0.520),
+        "branch_overload": (16.2, 17.4),
+    }
+    return ranges[profile_name]
+
+
+def _random_current(profile_name: str) -> float:
+    start, end = _reading_range(profile_name)
+    return round(random.uniform(start, end), 3)
+
+
+def _branch_profile_name(scenario: str, branch: BranchProfile, branch_index: int) -> str:
+    normalized_scenario = SCENARIO_ALIASES.get(scenario, scenario)
+    physical_branch_id = _physical_branch_id()
+
+    if normalized_scenario in {"both_off", "one_idle", "one_workload", "two_idle", "two_workload"}:
+        return normalized_scenario
+    if normalized_scenario == "out_of_schedule":
+        return "one_idle" if branch.sensor_id == physical_branch_id else "both_off"
+    if normalized_scenario == "room_normal":
+        cycle = ["two_idle", "two_workload", "one_idle", "two_idle", "both_off"]
+        return cycle[(branch_index - 1) % len(cycle)]
+    if normalized_scenario == "branch_overload":
+        return "branch_overload" if branch.sensor_id == physical_branch_id else "both_off"
+    if normalized_scenario == "mixed_alerts":
+        if branch.sensor_id == physical_branch_id:
+            return "branch_overload"
+        if branch_index == 2:
+            return "one_workload"
+        return "both_off"
+    if normalized_scenario == "room_overload":
+        return "high_use"
+    raise ValueError(f"Escenario no soportado: {scenario}")
+
+
+def _scenario_current(scenario: str, branch: BranchProfile, branch_index: int) -> float:
+    return _random_current(_branch_profile_name(scenario, branch, branch_index))
+
+
+def _post_reading(branch: BranchProfile, scenario: str, branch_index: int) -> dict[str, Any]:
+    token = os.getenv("SAFYRA_IOT_TOKEN", "").strip()
+    if not token:
+        raise RuntimeError("SAFYRA_IOT_TOKEN no esta configurado en el .env")
+
+    irms = _scenario_current(scenario, branch, branch_index)
+    payload = {
+        "sensor_id": branch.sensor_id,
+        "circuito": branch.circuit_label,
+        "irms": irms,
+        "potencia": round(irms * VOLTAGE, 3),
+        "voltage": VOLTAGE,
+    }
+    started_at = time.perf_counter()
+    try:
+        response = requests.post(
+            f"{_backend_url()}/api/data/iot/readings",
+            json=payload,
+            headers={"X-Safyra-Iot-Token": token},
+            timeout=_request_timeout_seconds(),
+        )
+    except requests.Timeout as exc:
+        raise RuntimeError(
+            f"Timeout enviando {branch.sensor_id} en {scenario} despues de {_request_timeout_seconds():.1f}s. "
+            "El backend puede seguir procesando la lectura; revisa el dashboard/correo antes de repetir."
+        ) from exc
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Error HTTP enviando {branch.sensor_id} en {scenario}: {exc}") from exc
+    latency_ms = (time.perf_counter() - started_at) * 1000
+    if not response.ok:
+        raise RuntimeError(
+            f"Backend rechazo {branch.sensor_id} en {scenario}: "
+            f"{response.status_code} {response.reason} - {_response_detail(response)}"
+        )
+    result = response.json()
+    result["latency_ms"] = round(latency_ms, 1)
+    return result
+
+
+def run_once(scenario: str) -> None:
+    total_current = 0.0
+    total_power = 0.0
+    latencies: list[float] = []
+    for index, branch in enumerate(_branch_profiles(), start=1):
+        result = _post_reading(branch, scenario, index)
+        sensor = result["sensor"]
+        notification = result["notification"]
+        latency_ms = float(result.get("latency_ms", 0.0))
+        latencies.append(latency_ms)
+        total_current += float(sensor["irms"])
+        total_power += float(sensor["potencia"])
+        print(
+            f"[{scenario}] {branch.circuit_label} -> {sensor['estado']} | "
+            f"{sensor['irms']:.3f} A | {sensor['potencia']:.1f} W | "
+            f"notificacion={notification.get('queued')} {notification.get('reason') or ''} | "
+            f"latencia={latency_ms:.1f} ms"
+        )
+    average_latency = sum(latencies) / len(latencies) if latencies else 0.0
+    max_latency = max(latencies) if latencies else 0.0
+    print(
+        f"Total salon estimado: {total_current:.3f} A | {total_power:.1f} W | "
+        f"latencia_promedio={average_latency:.1f} ms | latencia_max={max_latency:.1f} ms"
+    )
+
+
+def run_sequence(scenarios: list[str], interval_seconds: float) -> None:
+    if not scenarios:
+        raise ValueError("La secuencia debe incluir al menos un escenario")
+
+    wait_seconds = max(1.0, interval_seconds)
+    for index, scenario in enumerate(scenarios, start=1):
+        print(f"\n=== Escenario {index}/{len(scenarios)}: {scenario} ===")
+        run_once(scenario)
+        if index < len(scenarios):
+            time.sleep(wait_seconds)
+
 
 def main() -> None:
-    """
-    Bucle principal del simulador.
-    """
-    initialize_firebase()
-    
-    scenario_index = 1
-    scenario_start_time = time.time()
-    
-    print("\n=============================================")
-    print("🚀 SIMULADOR DE ESP32 INICIADO")
-    print(f"Cambiando escenarios cada {SCENARIO_DURATION_SECONDS} segundos.")
-    print("Presiona CTRL+C para detener.")
-    print("=============================================\n")
-    
-    try:
-        while True:
-            # 1. Comprobar si debemos cambiar de escenario
-            current_time = time.time()
-            if (current_time - scenario_start_time) > SCENARIO_DURATION_SECONDS:
-                scenario_index = (scenario_index % 4) + 1 # Cicla de 1 a 4
-                scenario_start_time = current_time
-                print("\n=============================================")
-                print(f"CAMBIANDO A ESCENARIO {scenario_index}")
-                print("=============================================\n")
+    load_dotenv()
+    parser = argparse.ArgumentParser(description="Simulador IoT SafyraShield por ramales")
+    parser.add_argument(
+        "--scenario",
+        choices=SUPPORTED_SCENARIOS,
+        default="branch_overload",
+    )
+    parser.add_argument("--demo", action="store_true", help="Ejecuta la secuencia recomendada para demostracion")
+    parser.add_argument("--sequence", help="Lista de escenarios separados por coma")
+    parser.add_argument("--loop", action="store_true", help="Ejecuta escenarios en bucle")
+    parser.add_argument("--interval", type=float, default=5.0, help="Segundos entre escenarios")
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=None,
+        help="Timeout HTTP por lectura. Util si Firebase o n8n responden lento.",
+    )
+    args = parser.parse_args()
+    if args.timeout is not None:
+        os.environ["IOT_SIMULATOR_TIMEOUT_SECONDS"] = str(max(1.0, args.timeout))
 
-            # 2. Generar y escribir datos para cada sensor
-            for sensor_id in SENSOR_IDS:
-                irms, potencia, estado = get_scenario_data(sensor_id, scenario_index)
-                
-                # =================================================================
-                # ¡AQUÍ ESTÁ LA CORRECCIÓN!
-                # Usamos timespec='seconds' para quitar los microsegundos (el ".")
-                timestamp = datetime.now().isoformat(timespec='seconds')
-                # =================================================================
-                
-                # Formato de datos que tu app espera
-                current_data = {
-                    'irms': irms,
-                    'potencia': potencia,
-                    'timestamp': timestamp
-                }
-                
-                history_data = {
-                    'irms': irms,
-                    'potencia': potencia,
-                    'estado': estado # ¡CLAVE! Esto es lo que lee tu bitácora de alertas
-                }
-                
-                # 3. Escribir en Firebase (actuando como el ESP32)
-                
-                # Escribe en /current_data (para el dashboard en tiempo real)
-                current_ref = db.reference(f'/current_data/{sensor_id}')
-                current_ref.set(current_data)
-                
-                # Escribe en /history (para las páginas de historial y alertas)
-                # El timestamp ahora es una clave válida (ej: 2025-11-05T19:05:30)
-                history_ref = db.reference(f'/history/{sensor_id}/{timestamp}')
-                history_ref.set(history_data)
-                
-                # Imprimir en consola lo que estamos haciendo
-                print(f"  [{sensor_id}] -> {estado:10} | {irms:5.2f} A | {potencia:7.1f} W")
-            
-            print("--- (Esperando 3s)")
-            time.sleep(UPDATE_INTERVAL_SECONDS)
+    selected_scenarios = DEMO_SEQUENCE if args.demo else _parse_scenario_sequence(args.sequence) if args.sequence else [args.scenario]
 
-    except KeyboardInterrupt:
-        print("\n=============================================")
-        print("🛑 Simulador detenido por el usuario.")
-        print("=============================================\n")
-    except Exception as e:
-        print(f"\n❌ ERROR EN EL SIMULADOR: {e}")
+    if not args.loop and len(selected_scenarios) == 1:
+        run_once(selected_scenarios[0])
+        return
+
+    if not args.loop:
+        run_sequence(selected_scenarios, args.interval)
+        return
+
+    index = 0
+    while True:
+        run_once(selected_scenarios[index])
+        index = (index + 1) % len(selected_scenarios)
+        time.sleep(max(1.0, args.interval))
+
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}")
+        raise SystemExit(1) from exc

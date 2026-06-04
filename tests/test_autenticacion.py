@@ -1,6 +1,6 @@
-# tests/test_autenticacion.py
+﻿# tests/test_autenticacion.py
 """
-Pruebas unitarias para el sistema de autenticación
+Pruebas unitarias para el sistema de autenticaciÃ³n
 Endpoint: POST /token
 """
 
@@ -34,8 +34,8 @@ class TestLoginExitoso:
         """
         Escenario: Usuario ingresa credenciales correctas
         Dado: Usuario admin de prueba configurado por entorno
-        Cuando: Se envía POST /token con las credenciales
-        Entonces: Se retorna token JWT válido
+        Cuando: Se envÃ­a POST /token con las credenciales
+        Entonces: Se retorna token JWT vÃ¡lido
         """
         response = test_client.post(
             "/token",
@@ -47,7 +47,7 @@ class TestLoginExitoso:
         assert "access_token" in data
         assert data["token_type"] == "bearer"
         
-        # Verificar que el token es válido
+        # Verificar que el token es vÃ¡lido
         token = data["access_token"]
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         assert payload["sub"] == TEST_ADMIN_USERNAME
@@ -56,7 +56,7 @@ class TestLoginExitoso:
     
     def test_token_contiene_expiracion(self, test_client):
         """
-        Escenario: Token generado contiene fecha de expiración
+        Escenario: Token generado contiene fecha de expiraciÃ³n
         Dado: Login exitoso
         Cuando: Se decodifica el token
         Entonces: Contiene campo "exp" con fecha futura
@@ -71,17 +71,17 @@ class TestLoginExitoso:
         
         assert "exp" in payload
         
-        # Usar timezone-aware datetime para comparación correcta
+        # Usar timezone-aware datetime para comparaciÃ³n correcta
         exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
         now = datetime.now(timezone.utc)
         
         # Verificar que el token expira en el futuro
-        assert exp_time > now, f"Token ya expiró: {exp_time} <= {now}"
+        assert exp_time > now, f"Token ya expirÃ³: {exp_time} <= {now}"
         
-        # Verificar que la expiración es razonable (entre 1 min y 2 años)
+        # Verificar que la expiraciÃ³n es razonable (entre 1 min y 2 aÃ±os)
         time_diff = exp_time - now
         assert timedelta(minutes=1) < time_diff < timedelta(days=730), \
-            f"Tiempo de expiración no razonable: {time_diff}"
+            f"Tiempo de expiraciÃ³n no razonable: {time_diff}"
 
 
 @pytest.mark.autenticacion
@@ -90,8 +90,8 @@ class TestLoginFallido:
     
     def test_credenciales_incorrectas(self, test_client):
         """
-        Escenario: Usuario con contraseña incorrecta
-        Dado: Usuario admin con contraseña incorrecta aleatoria
+        Escenario: Usuario con contraseÃ±a incorrecta
+        Dado: Usuario admin con contraseÃ±a incorrecta aleatoria
         Cuando: Se intenta login
         Entonces: Se retorna error 401
         """
@@ -106,7 +106,7 @@ class TestLoginFallido:
     def test_usuario_inexistente(self, test_client):
         """
         Escenario: Usuario no existe en la base de datos
-        Dado: Usuario "hacker" que no está registrado
+        Dado: Usuario "hacker" que no estÃ¡ registrado
         Cuando: Se intenta login
         Entonces: Se retorna error 401
         """
@@ -119,12 +119,12 @@ class TestLoginFallido:
     
     def test_campos_vacios(self, test_client):
         """
-        Escenario: Campos de login vacíos
-        Dado: Username o password vacío
+        Escenario: Campos de login vacÃ­os
+        Dado: Username o password vacÃ­o
         Cuando: Se intenta login
-        Entonces: Se retorna error 401 (credenciales inválidas)
+        Entonces: Se retorna error 401 (credenciales invÃ¡lidas)
         
-        Nota: FastAPI OAuth2PasswordRequestForm no valida campos vacíos
+        Nota: FastAPI OAuth2PasswordRequestForm no valida campos vacÃ­os
         como error 422, sino que los trata como credenciales incorrectas (401)
         """
         response = test_client.post(
@@ -139,7 +139,7 @@ class TestLoginFallido:
 
 @pytest.mark.autenticacion
 class TestProteccionEndpoints:
-    """Pruebas de protección de endpoints con JWT"""
+    """Pruebas de protecciÃ³n de endpoints con JWT"""
 
     def test_auth_config_no_expone_secretos(self, test_client):
         """
@@ -157,7 +157,7 @@ class TestProteccionEndpoints:
     def test_acceso_sin_token(self, test_client):
         """
         Escenario: Intento de acceso sin token
-        Dado: No se envía header de autorización
+        Dado: No se envÃ­a header de autorizaciÃ³n
         Cuando: Se accede a endpoint protegido
         Entonces: Se retorna error 401
         """
@@ -168,7 +168,7 @@ class TestProteccionEndpoints:
     def test_acceso_token_invalido(self, test_client):
         """
         Escenario: Token JWT malformado
-        Dado: Token inválido en header
+        Dado: Token invÃ¡lido en header
         Cuando: Se intenta acceder
         Entonces: Se retorna error 401
         """
@@ -180,7 +180,7 @@ class TestProteccionEndpoints:
     def test_acceso_token_expirado(self, test_client):
         """
         Escenario: Token JWT expirado
-        Dado: Token con fecha de expiración pasada
+        Dado: Token con fecha de expiraciÃ³n pasada
         Cuando: Se intenta usar el token
         Entonces: Se retorna error 401
         """
@@ -198,12 +198,12 @@ class TestProteccionEndpoints:
     
     def test_acceso_token_valido(self, test_client, headers_autenticados):
         """
-        Escenario: Acceso con token válido
-        Dado: Token JWT válido y no expirado
+        Escenario: Acceso con token vÃ¡lido
+        Dado: Token JWT vÃ¡lido y no expirado
         Cuando: Se accede a endpoint protegido
         Entonces: Se permite el acceso
         """
-        # Opción 1: Mock directo en el router (recomendado)
+        # OpciÃ³n 1: Mock directo en el router (recomendado)
         with patch('app.routers.data_api.get_current_data') as mock_get:
             mock_get.return_value = {
                 "sensors": [],
@@ -221,7 +221,7 @@ class TestProteccionEndpoints:
             assert "connected" in data
             assert isinstance(data["sensors"], list)
             
-            # Verificar que la función fue llamada
+            # Verificar que la funciÃ³n fue llamada
             mock_get.assert_called_once()
 
     def test_acceso_con_firebase_id_token_valido(self, test_client):
@@ -285,9 +285,9 @@ class TestProteccionEndpoints:
         assert data["status"] == "activo"
         assert "hashed_password" not in data
 
-    def test_operativo_puede_ver_dashboard_actual(self, test_client, headers_operativo):
+    def test_auditor_puede_ver_dashboard_actual(self, test_client, headers_auditor):
         """
-        Escenario: Rol operativo accede al dashboard de monitoreo
+        Escenario: Rol auditor accede al dashboard de monitoreo
         Entonces: Se permite solo lectura operativa
         """
         with patch('app.routers.data_api.get_current_data') as mock_get:
@@ -299,29 +299,21 @@ class TestProteccionEndpoints:
                 "total_consumption": 0.0
             }
 
-            response = test_client.get("/api/data/current", headers=headers_operativo)
+            response = test_client.get("/api/data/current", headers=headers_auditor)
 
             assert response.status_code == 200
             mock_get.assert_called_once()
 
-    def test_auditor_no_puede_ver_dashboard_operativo(self, test_client, headers_auditor):
-        """
-        Escenario: Rol auditor intenta acceder a vista operativa
-        Entonces: El backend bloquea por rol
-        """
-        response = test_client.get("/api/data/current", headers=headers_auditor)
 
-        assert response.status_code == 403
-
-    def test_operativo_no_puede_actualizar_umbral(self, test_client, headers_operativo):
+    def test_auditor_no_puede_actualizar_umbral(self, test_client, headers_auditor):
         """
-        Escenario: Rol operativo intenta modificar configuración crítica
-        Entonces: El backend bloquea la operación
+        Escenario: Rol auditor intenta modificar configuraciÃ³n crÃ­tica
+        Entonces: El backend bloquea la operaciÃ³n
         """
         response = test_client.put(
             "/api/data/threshold/LAB-PC-01",
             json={"corriente": 11.0, "potencia": 2420.0},
-            headers=headers_operativo
+            headers=headers_auditor
         )
 
         assert response.status_code == 403
@@ -329,7 +321,7 @@ class TestProteccionEndpoints:
     def test_usuario_congelado_no_puede_acceder(self, test_client, headers_congelado):
         """
         Escenario: Usuario con estado congelado intenta usar su token
-        Entonces: El sistema rechaza la autenticación
+        Entonces: El sistema rechaza la autenticaciÃ³n
         """
         response = test_client.get("/api/data/current", headers=headers_congelado)
 
@@ -346,13 +338,13 @@ class TestConsentimientoTyC:
             "username": username,
             "full_name": "Usuario TyC",
             "email": f"{username}@example.test",
-            "role": "operativo",
+            "role": "auditor",
             "status": "activo",
             "disabled": False,
             "hashed_password": pwd_context.hash(secrets.token_urlsafe(24)),
         }
         fake_consent_db.pop(username, None)
-        token = create_access_token(data={"sub": username, "role": "operativo"})
+        token = create_access_token(data={"sub": username, "role": "auditor"})
         return username, {"Authorization": f"Bearer {token}"}
 
     def test_tyc_pendiente_bloquea_endpoint_protegido(self, test_client):
@@ -386,7 +378,7 @@ class TestConsentimientoTyC:
             assert response.status_code == 201
             data = response.json()
             assert data["username"] == username
-            assert data["role"] == "operativo"
+            assert data["role"] == "auditor"
             assert data["terms_version"] == TERMS_VERSION
             assert data["accepted_at"]
             assert "hashed_password" not in data
@@ -405,7 +397,7 @@ class TestConsentimientoTyC:
         username, headers = self._crear_usuario_activo_sin_consentimiento()
         fake_consent_db[username] = [{
             "username": username,
-            "role": "operativo",
+            "role": "auditor",
             "terms_version": TERMS_VERSION,
             "accepted_at": datetime.now(timezone.utc).isoformat(),
             "event_type": "terms_acceptance",
@@ -431,14 +423,14 @@ class TestConsentimientoTyC:
 
 @pytest.mark.autenticacion
 class TestSeguridadPassword:
-    """Pruebas de seguridad de contraseñas"""
+    """Pruebas de seguridad de contraseÃ±as"""
     
     def test_password_hasheado(self):
         """
-        Escenario: Verificar que contraseñas están hasheadas
-        Dado: Sistema de autenticación
+        Escenario: Verificar que contraseÃ±as estÃ¡n hasheadas
+        Dado: Sistema de autenticaciÃ³n
         Cuando: Se verifica la base de datos
-        Entonces: Contraseñas no están en texto plano
+        Entonces: ContraseÃ±as no estÃ¡n en texto plano
         """
         from app.routers.auth_api import fake_users_db
         
@@ -446,15 +438,15 @@ class TestSeguridadPassword:
             if user_data.get("auth_provider") == "firebase":
                 assert not user_data.get("hashed_password")
                 continue
-            # La contraseña hasheada debe comenzar con $2b$ (bcrypt)
+            # La contraseÃ±a hasheada debe comenzar con $2b$ (bcrypt)
             assert user_data["hashed_password"].startswith("$2b$")
             # Debe tener longitud de hash bcrypt (60 caracteres)
             assert len(user_data["hashed_password"]) == 60
     
     def test_inyeccion_sql_username(self, test_client):
         """
-        Escenario: Intento de inyección SQL en username
-        Dado: Username con caracteres de inyección SQL
+        Escenario: Intento de inyecciÃ³n SQL en username
+        Dado: Username con caracteres de inyecciÃ³n SQL
         Cuando: Se intenta login
         Entonces: Sistema maneja correctamente sin vulnerabilidad
         """
@@ -468,8 +460,8 @@ class TestSeguridadPassword:
         
     def test_password_con_caracteres_especiales(self, test_client):
         """
-        Escenario: Contraseña con caracteres especiales
-        Dado: Password con símbolos y espacios
+        Escenario: ContraseÃ±a con caracteres especiales
+        Dado: Password con sÃ­mbolos y espacios
         Cuando: Se intenta login
         Entonces: Sistema maneja correctamente
         """
@@ -478,13 +470,13 @@ class TestSeguridadPassword:
             data={"username": TEST_ADMIN_USERNAME, "password": SPECIAL_INVALID_TEST_PASSWORD}
         )
         
-        # Debe rechazar (no es la contraseña correcta)
+        # Debe rechazar (no es la contraseÃ±a correcta)
         assert response.status_code == 401
 
 
 @pytest.mark.autenticacion
 class TestGestionUsuarios:
-    """Pruebas de gestión administrativa de usuarios, roles y estados"""
+    """Pruebas de gestiÃ³n administrativa de usuarios, roles y estados"""
 
     def test_admin_lista_usuarios_sin_hash_password(self, test_client, headers_autenticados):
         response = test_client.get("/admin/users", headers=headers_autenticados)
@@ -494,13 +486,13 @@ class TestGestionUsuarios:
         assert any(user["username"] == TEST_ADMIN_USERNAME for user in users)
         assert all("hashed_password" not in user for user in users)
 
-    def test_operativo_no_puede_listar_usuarios(self, test_client, headers_operativo):
-        response = test_client.get("/admin/users", headers=headers_operativo)
+    def test_auditor_no_puede_listar_usuarios(self, test_client, headers_auditor):
+        response = test_client.get("/admin/users", headers=headers_auditor)
 
         assert response.status_code == 403
 
-    def test_admin_crea_usuario_operativo(self, test_client, headers_autenticados):
-        username = f"operativo_{secrets.token_hex(4)}"
+    def test_admin_crea_usuario_auditor(self, test_client, headers_autenticados):
+        username = f"auditor_{secrets.token_hex(4)}"
         password = secrets.token_urlsafe(24)
 
         response = test_client.post(
@@ -509,17 +501,17 @@ class TestGestionUsuarios:
             json={
                 "username": username,
                 "password": password,
-                "role": "operativo",
+                "role": "auditor",
                 "status": "activo",
                 "email": f"{username}@example.test",
-                "full_name": "Usuario Operativo Nuevo",
+                "full_name": "Usuario auditor Nuevo",
             },
         )
 
         assert response.status_code == 201
         data = response.json()
         assert data["username"] == username
-        assert data["role"] == "operativo"
+        assert data["role"] == "auditor"
         assert data["status"] == "activo"
         assert "hashed_password" not in data
 
@@ -528,7 +520,7 @@ class TestGestionUsuarios:
             data={"username": username, "password": password},
         )
         assert login_response.status_code == 200
-        assert login_response.json()["role"] == "operativo"
+        assert login_response.json()["role"] == "auditor"
 
     def test_no_hay_registro_publico_para_crear_usuarios(self, test_client):
         username = f"auditor_{secrets.token_hex(4)}"
@@ -554,7 +546,7 @@ class TestGestionUsuarios:
             json={
                 "username": username,
                 "password": password,
-                "role": "operativo",
+                "role": "auditor",
                 "status": "activo",
             },
         )
@@ -601,7 +593,7 @@ class TestGestionUsuarios:
         payload = {
             "username": username,
             "password": secrets.token_urlsafe(24),
-            "role": "operativo",
+            "role": "auditor",
             "status": "activo",
         }
 

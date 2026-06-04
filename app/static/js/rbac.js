@@ -2,14 +2,12 @@
     const LOGIN_URL = "/login";
     const TERMS_URL = "/terms";
     const ROLE_LABELS = {
-        admin: "Vista Admin",
-        operativo: "Vista Operativa",
-        auditor: "Vista Auditor",
+        admin: "Admin / Custodio",
+        auditor: "Direccion",
     };
     const ROLE_HOME = {
         admin: "/",
-        operativo: "/",
-        auditor: "/history",
+        auditor: "/schedule",
     };
 
     function getToken() {
@@ -47,7 +45,7 @@
         }
         return String(roles || "")
             .split(",")
-            .map((role) => role.trim())
+            .map((role) => role.trim().toLowerCase())
             .filter(Boolean);
     }
 
@@ -55,7 +53,7 @@
         if (!user) {
             return false;
         }
-        return normalizeRoles(roles).includes(user.role);
+        return normalizeRoles(roles).includes(String(user.role || "").toLowerCase());
     }
 
     function roleHome(role) {
@@ -113,6 +111,7 @@
             return;
         }
 
+        user.role = String(user.role || "").toLowerCase();
         localStorage.setItem("safyraRole", user.role);
         localStorage.setItem("safyraUsername", user.username);
 

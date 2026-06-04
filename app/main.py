@@ -45,6 +45,10 @@ async def alerts_page(request: Request):
 async def users_page(request: Request):
     return templates.TemplateResponse("users.html", {"request": request})
 
+@app.get("/schedule")
+async def schedule_page(request: Request):
+    return templates.TemplateResponse("schedule.html", {"request": request})
+
 @app.get("/health")
 async def health_check():
     return {

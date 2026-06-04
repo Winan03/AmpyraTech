@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -303,8 +303,7 @@
             color: var(--primary);
         }
 
-        .pill.operativo { color: var(--cyan); background: color-mix(in srgb, var(--cyan), transparent 86%); }
-        .pill.auditor { color: var(--pink); background: color-mix(in srgb, var(--pink), transparent 88%); }
+        .pill.auditor { color: var(--primary); background: color-mix(in srgb, var(--primary), transparent 86%); }
         .pill.activo { color: var(--success); background: color-mix(in srgb, var(--success), transparent 88%); }
         .pill.congelado { color: var(--warning); background: color-mix(in srgb, var(--warning), transparent 86%); }
         .pill.deshabilitado { color: var(--danger); background: color-mix(in srgb, var(--danger), transparent 88%); }
@@ -373,7 +372,7 @@
             .nav-btn, .theme-toggle { width: 100%; justify-content: center; }
         }
     </style>
-    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260601-5">
+    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260602-2">
 </head>
 <body data-theme="light">
     <div class="app-shell">
@@ -388,7 +387,7 @@
             </div>
             <nav class="sidebar-nav" aria-label="Navegaci&oacute;n principal">
                 <div class="sidebar-section-label">Navegaci&oacute;n</div>
-                <a class="sidebar-link" href="/" data-roles="admin,operativo">
+                <a class="sidebar-link" href="/" data-roles="admin,auditor">
                     <span class="sidebar-icon" aria-hidden="true">DB</span>
                     <span class="sidebar-copy">
                         <strong>Dashboard</strong>
@@ -407,6 +406,13 @@
                     <span class="sidebar-copy">
                         <strong>Historial</strong>
                         <small>Registros el&eacute;ctricos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/schedule" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">AG</span>
+                    <span class="sidebar-copy">
+                        <strong>Agenda</strong>
+                        <small>Horarios del laboratorio</small>
                     </span>
                 </a>
                 <a class="sidebar-link active" href="/users" data-roles="admin">
@@ -435,21 +441,21 @@
             <div class="header-content">
                 <div class="logo-section">
                     <div class="logo-text shell-title">
-                        <h1>Gestión de Usuarios</h1>
+                        <h1>Gesti&oacute;n de Usuarios</h1>
                         <p>Roles, estados y accesos del sistema</p>
                     </div>
                 </div>
 
                 <div class="header-controls">
                     <button class="theme-toggle" onclick="toggleTheme()">
-                        <span id="theme-icon">☀️</span>
+                        <span id="theme-icon"></span>
                         <span id="theme-text">Modo Claro</span>
                     </button>
                     <span class="nav-btn role-chip" data-role-badge>Validando rol...</span>
-                    <a href="/" class="nav-btn mobile-nav">🏠 Dashboard</a>
-                    <a href="/history" class="nav-btn mobile-nav">📋 Historial</a>
-                    <a href="/alerts" class="nav-btn mobile-nav">⚠️ Alertas</a>
-                    <button class="nav-btn mobile-nav" onclick="logout()">🔒 Cerrar Sesión</button>
+                    <a href="/" class="nav-btn mobile-nav">Dashboard</a>
+                    <a href="/history" class="nav-btn mobile-nav">Historial</a>
+                    <a href="/alerts" class="nav-btn mobile-nav">Alertas</a>
+                    <button class="nav-btn mobile-nav" onclick="logout()">Cerrar sesi&oacute;n</button>
                 </div>
             </div>
         </header>
@@ -467,7 +473,7 @@
                 <form id="create-user-form" class="form-grid">
                     <div class="field">
                         <label for="username">Usuario interno</label>
-                        <input id="username" name="username" type="text" minlength="3" maxlength="50" required placeholder="operativo_lab">
+                        <input id="username" name="username" type="text" minlength="3" maxlength="50" required placeholder="direccion">
                     </div>
                     <div class="field">
                         <label for="email">Correo</label>
@@ -478,14 +484,13 @@
                         <input id="full-name" name="full_name" type="text" placeholder="Nombre del responsable">
                     </div>
                     <div class="field">
-                        <label for="password">Contraseña inicial</label>
+                        <label for="password">Contrase&ntilde;a inicial</label>
                         <input id="password" name="password" type="password" minlength="12" required autocomplete="new-password">
                     </div>
                     <div class="field">
                         <label for="role">Rol</label>
                         <select id="role" name="role" required>
-                            <option value="operativo">Operativo</option>
-                            <option value="auditor">Auditor / Dirección</option>
+                            <option value="auditor">Direcci&oacute;n</option>
                             <option value="admin">Admin / Custodio</option>
                         </select>
                     </div>
@@ -540,8 +545,7 @@
                     <label for="edit-role">Rol</label>
                     <select id="edit-role">
                         <option value="admin">Admin / Custodio</option>
-                        <option value="operativo">Operativo</option>
-                        <option value="auditor">Auditor / Dirección</option>
+                        <option value="auditor">Direcci&oacute;n</option>
                     </select>
                 </div>
                 <div class="field">
@@ -584,7 +588,7 @@
             const themeText = document.getElementById('theme-text');
             const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             body.setAttribute('data-theme', newTheme);
-            themeIcon.textContent = newTheme === 'light' ? '☀️' : '🌙';
+            themeIcon.textContent = '';
             themeText.textContent = newTheme === 'light' ? 'Modo Claro' : 'Modo Oscuro';
             localStorage.setItem('theme', newTheme);
         }
@@ -592,7 +596,7 @@
         function loadTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
-            document.getElementById('theme-icon').textContent = savedTheme === 'light' ? '☀️' : '🌙';
+            document.getElementById('theme-icon').textContent = '';
             document.getElementById('theme-text').textContent = savedTheme === 'light' ? 'Modo Claro' : 'Modo Oscuro';
         }
 
@@ -608,8 +612,7 @@
         function roleLabel(role) {
             return {
                 admin: 'Admin / Custodio',
-                operativo: 'Operativo',
-                auditor: 'Auditor / Dirección',
+                auditor: 'Direcci\u00f3n',
             }[role] || role;
         }
 
@@ -764,7 +767,7 @@
         searchInput.addEventListener('input', renderUsers);
 
         document.addEventListener('DOMContentLoaded', async function () {
-            currentUser = await SafyraAuth.requireRoles(['admin'], { redirectByRole: { operativo: '/', auditor: '/history' } });
+            currentUser = await SafyraAuth.requireRoles(['admin'], { redirectByRole: { auditor: '/schedule' } });
             if (!currentUser) return;
             loadTheme();
             await loadUsers();

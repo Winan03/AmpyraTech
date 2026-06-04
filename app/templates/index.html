@@ -1402,8 +1402,9 @@
         }
 
         .sensors-grid {
-            grid-template-columns: repeat(3, minmax(300px, 1fr));
+            grid-template-columns: minmax(360px, 560px) minmax(320px, 1fr);
             gap: 20px;
+            align-items: stretch;
         }
 
         .sensor-card {
@@ -1412,6 +1413,103 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+        }
+
+        .decision-panel {
+            min-height: 318px;
+            padding: 0;
+            overflow: hidden;
+            border: 1px solid rgba(31, 48, 68, 0.10);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.86);
+            box-shadow: 0 18px 42px rgba(31, 48, 68, 0.08);
+        }
+
+        body[data-theme="dark"] .decision-panel {
+            background: rgba(18, 28, 48, 0.82);
+            border-color: rgba(255, 255, 255, 0.10);
+        }
+
+        .decision-panel::before {
+            content: "";
+            display: block;
+            height: 5px;
+            background: linear-gradient(90deg, #1667be, #12a87d, #f0a629);
+        }
+
+        .decision-panel-inner {
+            display: grid;
+            gap: 16px;
+            padding: 24px;
+        }
+
+        .decision-panel h2 {
+            color: #101929;
+            font-size: 1.25rem;
+            line-height: 1.18;
+            margin: 0;
+        }
+
+        body[data-theme="dark"] .decision-panel h2 {
+            color: #ffffff;
+        }
+
+        .decision-panel p {
+            color: #637287;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .decision-kpi {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .decision-kpi div {
+            min-height: 76px;
+            border: 1px solid rgba(31, 48, 68, 0.10);
+            border-radius: 14px;
+            background: rgba(247, 250, 252, 0.78);
+            padding: 13px;
+        }
+
+        body[data-theme="dark"] .decision-kpi div {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.10);
+        }
+
+        .decision-kpi span {
+            display: block;
+            color: #718198;
+            font-size: 0.68rem;
+            font-weight: 850;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .decision-kpi strong {
+            display: block;
+            margin-top: 8px;
+            color: #0d58a8;
+            font-size: 1rem;
+            line-height: 1.15;
+        }
+
+        .decision-next-step {
+            border-radius: 14px;
+            background: #eaf8f4;
+            border: 1px solid rgba(18, 168, 125, 0.22);
+            color: #075f48;
+            padding: 14px 15px;
+            font-weight: 800;
+            line-height: 1.45;
+        }
+
+        body[data-theme="dark"] .decision-next-step {
+            background: rgba(18, 168, 125, 0.12);
+            color: #abf4dd;
+            border-color: rgba(18, 168, 125, 0.24);
         }
 
         .sensor-card.overload,
@@ -1499,6 +1597,12 @@
             background: rgba(214, 59, 85, 0.12);
             color: #b92342;
             border-color: rgba(214, 59, 85, 0.28);
+        }
+
+        .room-status-badge.outside {
+            background: rgba(245, 158, 11, 0.14);
+            color: #a16207;
+            border-color: rgba(245, 158, 11, 0.34);
         }
 
         .device-info-box {
@@ -1819,7 +1923,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260601-5">
+    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260602-2">
 </head>
 <body data-theme="light">
     <div id="alert-container" class="alert-container"></div>
@@ -1837,7 +1941,7 @@
 
             <nav class="sidebar-nav" aria-label="Navegaci&oacute;n principal">
                 <div class="sidebar-section-label">Navegaci&oacute;n</div>
-                <a class="sidebar-link active" href="/" data-roles="admin,operativo">
+                <a class="sidebar-link active" href="/" data-roles="admin,auditor">
                     <span class="sidebar-icon" aria-hidden="true">DB</span>
                     <span class="sidebar-copy">
                         <strong>Dashboard</strong>
@@ -1856,6 +1960,13 @@
                     <span class="sidebar-copy">
                         <strong>Historial</strong>
                         <small>Registros el&eacute;ctricos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/schedule" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">AG</span>
+                    <span class="sidebar-copy">
+                        <strong>Agenda</strong>
+                        <small>Horarios del laboratorio</small>
                     </span>
                 </a>
                 <a class="sidebar-link" href="/users" data-roles="admin">
@@ -1904,6 +2015,10 @@
                         Historial
                     </a>
 
+                    <a href="/schedule" class="nav-btn mobile-nav" data-roles="admin,auditor">
+                        Agenda
+                    </a>
+
                     <a href="/users" class="nav-btn mobile-nav" data-roles="admin">
                         Usuarios
                     </a>
@@ -1928,7 +2043,7 @@
             <div class="stat-card">
                 <div class="stat-icon">🔌</div>
                 <div class="stat-info">
-                    <h3>Salones con consumo</h3>
+                    <h3>Ramales con consumo</h3>
                     <div class="stat-value" id="active-sensors">0</div>
                 </div>
             </div>
@@ -1957,12 +2072,12 @@
             <span>Uso del umbral: comparación contra el límite permitido del salón.</span>
         </section>
 
-        <div class="sensors-grid">
+        <div class="sensors-grid" id="sensors-grid">
             <div class="sensor-card" id="sensor-LAB-PC-01" data-room-id="LAB-PC-01">
                 <div class="sensor-header">
                     <div class="room-heading">
                         <span class="room-kicker">Salón de laboratorio</span>
-                        <h2>Laboratorio de Cómputo 01</h2>
+                        <h2>Laboratorio de Cómputo</h2>
                         <span class="room-code">Canal de medición 01</span>
                     </div>
                     <span class="room-status-badge" id="room-status-LAB-PC-01">Sin lectura</span>
@@ -2006,101 +2121,33 @@
                 </button>
             </div>
 
-            <div class="sensor-card" id="sensor-LAB-PC-02" data-room-id="LAB-PC-02">
-                <div class="sensor-header">
-                    <div class="room-heading">
-                        <span class="room-kicker">Salón de laboratorio</span>
-                        <h2>Laboratorio de Cómputo 02</h2>
-                        <span class="room-code">Canal de medición 02</span>
+            <aside class="decision-panel">
+                <div class="decision-panel-inner">
+                    <div>
+                        <span class="room-kicker">Apoyo para decision</span>
+                        <h2>Estado operativo del laboratorio</h2>
                     </div>
-                    <span class="room-status-badge" id="room-status-LAB-PC-02">Sin lectura</span>
-                </div>
-                
-                <div class="device-info-box" id="device-info-LAB-PC-02">
-                    <span class="device-type">Estado eléctrico pendiente</span>
-                    <span class="device-description">Esperando lectura del sensor SCT013-030.</span>
-                </div>
-                
-                <div class="metrics-grid">
-                    <div class="metric-box">
-                        <div class="metric-content">
-                            <h4>Corriente medida</h4>
-                            <div class="metric-value" id="irms-LAB-PC-02">0.0 A</div>
-                            <span class="metric-help">A = intensidad detectada</span>
+                    <p>El sistema contrasta consumo electrico, umbral y agenda para indicar si el salon esta operando normalmente o requiere revision.</p>
+                    <div class="decision-kpi">
+                        <div>
+                            <span>Estado</span>
+                            <strong id="decision-status">Pendiente</strong>
+                        </div>
+                        <div>
+                            <span>Agenda</span>
+                            <strong id="decision-schedule">Sin validar</strong>
+                        </div>
+                        <div>
+                            <span>Accion</span>
+                            <strong id="decision-action">Esperar lectura</strong>
                         </div>
                     </div>
-                    
-                    <div class="metric-box">
-                        <div class="metric-content">
-                            <h4>Consumo estimado</h4>
-                            <div class="metric-value" id="power-LAB-PC-02">0 W</div>
-                            <span class="metric-help">W = demanda aproximada</span>
-                        </div>
+                    <div class="decision-next-step" id="decision-message">
+                        Esperando lectura del sensor para emitir una recomendacion.
                     </div>
                 </div>
-                
-                <div class="progress-container">
-                    <div class="progress-meta">
-                        <span id="usage-LAB-PC-02">Uso del umbral: 0%</span>
-                        <span id="threshold-LAB-PC-02">Umbral: -- A</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-LAB-PC-02" style="width: 0%"></div>
-                    </div>
-                </div>
-                
-                <button class="btn-configure" data-roles="admin" onclick="openThresholdModal('LAB-PC-02')">
-                    Configurar umbral
-                </button>
-            </div>
+            </aside>
 
-            <div class="sensor-card" id="sensor-LAB-PC-03" data-room-id="LAB-PC-03">
-                <div class="sensor-header">
-                    <div class="room-heading">
-                        <span class="room-kicker">Salón de laboratorio</span>
-                        <h2>Laboratorio de Cómputo 03</h2>
-                        <span class="room-code">Canal de medición 03</span>
-                    </div>
-                    <span class="room-status-badge" id="room-status-LAB-PC-03">Sin lectura</span>
-                </div>
-                
-                <div class="device-info-box" id="device-info-LAB-PC-03">
-                    <span class="device-type">Estado eléctrico pendiente</span>
-                    <span class="device-description">Esperando lectura del sensor SCT013-030.</span>
-                </div>
-                
-                <div class="metrics-grid">
-                    <div class="metric-box">
-                        <div class="metric-content">
-                            <h4>Corriente medida</h4>
-                            <div class="metric-value" id="irms-LAB-PC-03">0.0 A</div>
-                            <span class="metric-help">A = intensidad detectada</span>
-                        </div>
-                    </div>
-                    
-                    <div class="metric-box">
-                        <div class="metric-content">
-                            <h4>Consumo estimado</h4>
-                            <div class="metric-value" id="power-LAB-PC-03">0 W</div>
-                            <span class="metric-help">W = demanda aproximada</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="progress-container">
-                    <div class="progress-meta">
-                        <span id="usage-LAB-PC-03">Uso del umbral: 0%</span>
-                        <span id="threshold-LAB-PC-03">Umbral: -- A</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-LAB-PC-03" style="width: 0%"></div>
-                    </div>
-                </div>
-                
-                <button class="btn-configure" data-roles="admin" onclick="openThresholdModal('LAB-PC-03')">
-                    Configurar umbral
-                </button>
-            </div>
         </div>
 
         <div class="chart-section" data-roles="admin">
@@ -2177,20 +2224,13 @@
         // ======================================================================
         let chart = null;
         const MAX_DATA_POINTS = 20;
-        const SENSOR_IDS = ["LAB-PC-01", "LAB-PC-02", "LAB-PC-03"];
-        const ACTIVE_CURRENT_MIN_AMPS = 0.01;
+        let SENSOR_IDS = [];
+        const ACTIVE_CURRENT_MIN_AMPS = 0.16;
+        const CHART_COLORS = ["#1667be", "#12a87d", "#f0a629", "#c2410c", "#7c3aed", "#0891b2", "#be123c", "#4d7c0f", "#0f766e", "#9333ea"];
         const ROOM_CONFIG = {
             "LAB-PC-01": {
-                name: "Laboratorio de Cómputo 01",
+                name: "Laboratorio de Cómputo",
                 code: "Canal de medición 01",
-            },
-            "LAB-PC-02": {
-                name: "Laboratorio de Cómputo 02",
-                code: "Canal de medición 02",
-            },
-            "LAB-PC-03": {
-                name: "Laboratorio de Cómputo 03",
-                code: "Canal de medición 03",
             },
         };
         let currentSensorForThreshold = null;
@@ -2208,36 +2248,29 @@
             labels: [],
             datasets: [
                 {
-                    label: 'Laboratorio de Cómputo 01',
+                    label: 'Laboratorio de Cómputo',
                     data: [],
                     borderColor: '#00f5ff',
                     backgroundColor: 'rgba(0, 245, 255, 0.1)',
                     tension: 0.4,
                     fill: true,
                     borderWidth: 3
-                },
-                {
-                    label: 'Laboratorio de Cómputo 02',
-                    data: [],
-                    borderColor: '#00ff88',
-                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    borderWidth: 3
-                },
-                {
-                    label: 'Laboratorio de Cómputo 03',
-                    data: [],
-                    borderColor: '#ff006e',
-                    backgroundColor: 'rgba(255, 0, 110, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    borderWidth: 3
                 }
             ]
         };
+        chartData.datasets = [];
 
         function getRoom(sensorId) {
+            const match = String(sensorId || "").match(/^C-(\d{2})$/);
+            if (match) {
+                const index = Number(match[1]);
+                const pcStart = ((index - 1) * 2) + 1;
+                const pcEnd = index * 2;
+                return {
+                    name: `${sensorId} (PC ${String(pcStart).padStart(2, "0")}-${String(pcEnd).padStart(2, "0")})`,
+                    code: index === 1 ? "Prototipo fisico SCT013-030" : "Ramal simulado",
+                };
+            }
             return ROOM_CONFIG[sensorId] || {
                 name: `Salón ${sensorId}`,
                 code: `Sensor interno ${sensorId}`,
@@ -2245,29 +2278,48 @@
         }
 
         function getRoomElectricalState(sensor) {
+            const relevantCurrent = Number(sensor.schedule && sensor.schedule.min_current_a) || ACTIVE_CURRENT_MIN_AMPS;
             if (sensor.is_overload) {
                 return {
                     key: "overload",
                     label: "Sobrecarga",
                     title: "Consumo fuera del umbral",
-                    description: "El salón superó el límite configurado. Revisar carga eléctrica.",
+                    description: "El ramal supero el limite configurado. Revisar carga electrica.",
                 };
             }
 
-            if (sensor.irms > ACTIVE_CURRENT_MIN_AMPS) {
+            if (sensor.is_out_of_schedule) {
+                return {
+                    key: "outside",
+                    label: "Fuera de horario",
+                    title: "Consumo fuera del horario autorizado",
+                    description: "Hay consumo electrico, pero la agenda no registra uso autorizado para este momento.",
+                };
+            }
+
+            if (sensor.irms >= relevantCurrent) {
                 return {
                     key: "normal",
                     label: "Consumo normal",
                     title: "Consumo dentro del umbral",
-                    description: "Hay consumo medido por el sensor y no supera el límite del salón.",
+                    description: "Hay consumo relevante en el ramal y no supera el limite configurado.",
+                };
+            }
+
+            if (sensor.irms > 0) {
+                return {
+                    key: "idle",
+                    label: "Consumo residual",
+                    title: "Consumo residual del ramal",
+                    description: "Lectura compatible con equipos apagados o en espera. No genera alerta.",
                 };
             }
 
             return {
-                    key: "idle",
-                    label: "Sin consumo relevante",
-                    title: "Sin consumo relevante",
-                    description: "No se detecta corriente significativa; el salón puede estar apagado o sin carga.",
+                key: "idle",
+                label: "Sin consumo relevante",
+                title: "Sin consumo relevante",
+                description: "No se detecta corriente significativa; el ramal puede estar apagado o sin carga.",
             };
         }
 
@@ -2321,7 +2373,7 @@
         function toggleSound() {
             soundEnabled = !soundEnabled; // Invierte el estado (true/false)
             const soundBtn = document.getElementById('sound-toggle-btn');
-            
+
             if (soundEnabled) {
                 soundBtn.innerHTML = 'Sonido activado';
                 soundBtn.classList.add('active-sound');
@@ -2442,11 +2494,15 @@
             chart.update('none');
         }
 
-        function updateChart(timestamp) {
+        function updateChart(timestamp, sensors = []) {
             if (!chart) return;
 
+            const readings = new Map(sensors.map(sensor => [sensor.id, Number(sensor.irms) || 0]));
             chartData.labels.push(timestamp);
-            
+            chartData.datasets.forEach(dataset => {
+                dataset.data.push(readings.get(dataset.sensorId) || 0);
+            });
+
             if (chartData.labels.length > MAX_DATA_POINTS) {
                 chartData.labels.shift();
                 chartData.datasets.forEach(dataset => {
@@ -2460,7 +2516,106 @@
         // ======================================================================
         // ACTUALIZACIÓN DE SENSORES
         // ======================================================================
+        function escapeHtml(value) {
+            return String(value || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function createSensorCard(sensor) {
+            const grid = document.getElementById("sensors-grid");
+            if (!grid || document.getElementById(`sensor-${sensor.id}`)) return;
+
+            const room = getRoom(sensor.id);
+            const card = document.createElement("div");
+            card.className = "sensor-card";
+            card.id = `sensor-${sensor.id}`;
+            card.dataset.roomId = sensor.id;
+            card.innerHTML = `
+                <div class="sensor-header">
+                    <div class="room-heading">
+                        <span class="room-kicker">Ramal del laboratorio</span>
+                        <h2>${escapeHtml(room.name)}</h2>
+                        <span class="room-code">${escapeHtml(room.code)}</span>
+                    </div>
+                    <span class="room-status-badge" id="room-status-${escapeHtml(sensor.id)}">Sin lectura</span>
+                </div>
+
+                <div class="device-info-box" id="device-info-${escapeHtml(sensor.id)}">
+                    <span class="device-type">Estado electrico pendiente</span>
+                    <span class="device-description">Esperando lectura del ramal.</span>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-content">
+                            <h4>Corriente medida</h4>
+                            <div class="metric-value" id="irms-${escapeHtml(sensor.id)}">0.0 A</div>
+                            <span class="metric-help">A = intensidad detectada</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-box">
+                        <div class="metric-content">
+                            <h4>Consumo estimado</h4>
+                            <div class="metric-value" id="power-${escapeHtml(sensor.id)}">0 W</div>
+                            <span class="metric-help">W = demanda aproximada</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-meta">
+                        <span id="usage-${escapeHtml(sensor.id)}">Uso del umbral: 0%</span>
+                        <span id="threshold-${escapeHtml(sensor.id)}">Umbral: -- A</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-${escapeHtml(sensor.id)}" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <button class="btn-configure" data-roles="admin" onclick="openThresholdModal('${escapeHtml(sensor.id)}')">
+                    Configurar umbral
+                </button>
+            `;
+
+            const decisionPanel = document.querySelector(".decision-panel");
+            grid.insertBefore(card, decisionPanel || null);
+            if (currentUser) SafyraAuth.applyRoleUI(currentUser);
+        }
+
+        function syncSensorCards(sensors) {
+            const legacyCard = document.getElementById("sensor-LAB-PC-01");
+            if (legacyCard) legacyCard.remove();
+
+            SENSOR_IDS = sensors.map(sensor => sensor.id);
+            sensors.forEach(createSensorCard);
+            syncChartDatasets();
+        }
+
+        function syncChartDatasets() {
+            SENSOR_IDS.forEach((sensorId, index) => {
+                if (chartData.datasets[index] && chartData.datasets[index].sensorId === sensorId) return;
+                const room = getRoom(sensorId);
+                chartData.datasets[index] = {
+                    sensorId,
+                    label: room.name,
+                    data: [],
+                    borderColor: CHART_COLORS[index % CHART_COLORS.length],
+                    backgroundColor: "rgba(22, 103, 190, 0.08)",
+                    tension: 0.35,
+                    fill: false,
+                    borderWidth: 2,
+                };
+            });
+            chartData.datasets.length = SENSOR_IDS.length;
+        }
+
         function updateSensorCard(sensor) {
+            createSensorCard(sensor);
             const card = document.getElementById(`sensor-${sensor.id}`);
             if (!card) return;
 
@@ -2511,15 +2666,36 @@
                 dismissAlert(sensor.id);
             }
 
-            const datasetIndex = SENSOR_IDS.indexOf(sensor.id);
-            if (datasetIndex !== -1 && chartData.datasets[datasetIndex]) {
-                const currentLength = chartData.datasets[datasetIndex].data.length;
-                if (currentLength === 0 || currentLength < chartData.labels.length) {
-                    chartData.datasets[datasetIndex].data.push(sensor.irms);
-                } else {
-                    chartData.datasets[datasetIndex].data[currentLength - 1] = sensor.irms;
-                }
+        }
+
+        function updateDecisionPanel(sensor) {
+            if (!sensor) return;
+
+            const roomState = getRoomElectricalState(sensor);
+            const scheduleLabel = sensor.schedule && sensor.schedule.label ? sensor.schedule.label : "Sin horario activo";
+            const relevantCurrent = Number(sensor.schedule && sensor.schedule.min_current_a) || ACTIVE_CURRENT_MIN_AMPS;
+            let action = "Monitorear";
+            let message = "El consumo esta dentro del comportamiento esperado para el laboratorio.";
+
+            if (sensor.is_overload) {
+                action = "Revisar carga";
+                message = "Se detecto sobrecarga. Direccion puede usar el historial para sustentar mantenimiento o presupuesto.";
+            } else if (sensor.is_out_of_schedule) {
+                action = "Validar uso";
+                message = "Hay consumo fuera del horario registrado. Verificar si el laboratorio quedo encendido o si existe una actividad no registrada.";
+            } else if (sensor.irms < relevantCurrent) {
+                action = "Sin accion";
+                message = "No hay consumo relevante. El salon parece apagado o sin carga electrica significativa.";
             }
+
+            const statusEl = document.getElementById("decision-status");
+            const scheduleEl = document.getElementById("decision-schedule");
+            const actionEl = document.getElementById("decision-action");
+            const messageEl = document.getElementById("decision-message");
+            if (statusEl) statusEl.textContent = roomState.label;
+            if (scheduleEl) scheduleEl.textContent = scheduleLabel;
+            if (actionEl) actionEl.textContent = action;
+            if (messageEl) messageEl.textContent = message;
         }
 
         // ======================================================================
@@ -2528,7 +2704,7 @@
         function showOverloadAlert(sensor) {
             const alertId = `alert-${sensor.id}`;
             const room = getRoom(sensor.id);
-            
+
             if (!activeAlerts[sensor.id]) {
                 activeAlerts[sensor.id] = true;
 
@@ -2626,13 +2802,19 @@
             
             // ✅ SIEMPRE actualizar el gráfico, incluso con valores en 0
             if (data.sensors && Array.isArray(data.sensors)) {
+                syncSensorCards(data.sensors);
                 data.sensors.forEach(sensor => {
                     updateSensorCard(sensor);
                 });
+                const prioritySensor = data.sensors.find(sensor => sensor.is_overload)
+                    || data.sensors.find(sensor => sensor.is_out_of_schedule)
+                    || data.sensors.find(sensor => sensor.irms > ACTIVE_CURRENT_MIN_AMPS)
+                    || data.sensors[0];
+                updateDecisionPanel(prioritySensor);
             }
             
             // ✅ Actualizar gráfico SIEMPRE (incluso con 0)
-            updateChart(timestamp);
+            updateChart(timestamp, data.sensors || []);
             
             const lastUpdateEl = document.getElementById('last-update');
             if (lastUpdateEl) {
@@ -2655,15 +2837,18 @@
 
         function updateSummary(data) {
             if (!data.sensors) return;
-            
-            const activeSensors = data.sensors.filter(s => s.irms > ACTIVE_CURRENT_MIN_AMPS).length;
+
+            const activeSensors = data.sensors.filter(s => {
+                const relevantCurrent = Number(s.schedule && s.schedule.min_current_a) || ACTIVE_CURRENT_MIN_AMPS;
+                return s.irms >= relevantCurrent;
+            }).length;
             const activeSensorsEl = document.getElementById('active-sensors');
             if(activeSensorsEl) activeSensorsEl.textContent = activeSensors;
             
             const totalConsumptionEl = document.getElementById('total-consumption');
             if(totalConsumptionEl) totalConsumptionEl.textContent = (data.total_consumption || 0).toFixed(0) + ' W';
             
-            const overloadCount = data.sensors.filter(s => s.is_overload).length;
+            const overloadCount = data.sensors.filter(s => s.is_overload || s.is_out_of_schedule).length;
             const overloadCountEl = document.getElementById('overload-count');
             if(overloadCountEl) overloadCountEl.textContent = overloadCount;
             
@@ -2794,9 +2979,7 @@
         document.addEventListener("DOMContentLoaded", async function() {
             console.log('🚀 SafyraShield Premium v3.2 - Inicializando Dashboard');
 
-            currentUser = await SafyraAuth.requireRoles(['admin', 'operativo'], {
-                redirectByRole: { auditor: '/history' }
-            });
+            currentUser = await SafyraAuth.requireRoles(['admin', 'auditor']);
             if (!currentUser) return;
 
             loadTheme();

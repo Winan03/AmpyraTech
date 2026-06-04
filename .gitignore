@@ -23,3 +23,7 @@ Safyra_Shield_Firebase.json
 *.key
 *.p12
 *.pfx
+
+# Integracion
+integrations/
+docs/

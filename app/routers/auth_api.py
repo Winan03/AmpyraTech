@@ -49,14 +49,16 @@ DISABLE_FIREBASE_AUTH_USER_MANAGEMENT = os.getenv(
 ).lower() in {"1", "true", "yes"}
 if ALLOW_LEGACY_PASSWORD_LOGIN and not SECRET_KEY:
     raise RuntimeError("JWT_SECRET_KEY o SECRET_KEY debe estar configurada para login local legacy.")
-VALID_ROLES = {"admin", "operativo", "auditor"}
+VALID_ROLES = {"admin", "auditor"}
+ROLE_ALIASES = {"direccion": "auditor"}
+LEGACY_IGNORED_ROLES = {"operativo"}
 ACTIVE_STATUS = "activo"
 VALID_ACCOUNT_STATUSES = {ACTIVE_STATUS, "deshabilitado", "congelado"}
 USER_STORE_PATH = os.getenv("USER_STORE_PATH", "/app_users")
 FIREBASE_USER_STORE_DISABLED = os.getenv("DISABLE_FIREBASE_USER_STORE", "false").lower() in {"1", "true", "yes"}
 TERMS_VERSION = os.getenv("TERMS_VERSION", "2026-05-31")
 TERMS_CONSENT_STORE_PATH = os.getenv("TERMS_CONSENT_STORE_PATH", "/app_consents")
-TERMS_REQUIRED_ROLES_RAW = os.getenv("TERMS_REQUIRED_ROLES", "admin,operativo,auditor")
+TERMS_REQUIRED_ROLES_RAW = os.getenv("TERMS_REQUIRED_ROLES", "admin,auditor")
 
 # Contexto para Hashing de contraseñas
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -143,7 +145,7 @@ class ConsentRecord(BaseModel):
 fake_consent_db: dict[str, list[dict[str, Any]]] = {}
 
 def _validate_role(role: str) -> str:
-    normalized_role = role.strip().lower()
+    normalized_role = ROLE_ALIASES.get(role.strip().lower(), role.strip().lower())
     if normalized_role not in VALID_ROLES:
         raise RuntimeError(f"Rol inválido: {role}. Roles válidos: {', '.join(sorted(VALID_ROLES))}.")
     return normalized_role
@@ -160,7 +162,11 @@ def _validate_account_status(account_status: str) -> str:
 
 
 def _parse_terms_required_roles() -> set[str]:
-    roles = {role.strip().lower() for role in TERMS_REQUIRED_ROLES_RAW.split(",") if role.strip()}
+    roles = {
+        ROLE_ALIASES.get(role.strip().lower(), role.strip().lower())
+        for role in TERMS_REQUIRED_ROLES_RAW.split(",")
+        if role.strip() and role.strip().lower() not in LEGACY_IGNORED_ROLES
+    }
     if not roles:
         return set()
     invalid_roles = roles - VALID_ROLES
@@ -256,6 +262,23 @@ def _parse_status_for_request(account_status: str) -> str:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
 
+def _normalize_user_record(user_record: Mapping[str, Any]) -> dict[str, Any]:
+    normalized_record = dict(user_record)
+    normalized_record["role"] = _validate_role(str(normalized_record.get("role", "")).strip())
+    normalized_record["status"] = _validate_account_status(
+        str(normalized_record.get("status", ACTIVE_STATUS)).strip()
+    )
+    normalized_record["disabled"] = bool(
+        normalized_record.get("disabled", normalized_record["status"] != ACTIVE_STATUS)
+    )
+    normalized_record.setdefault("uid", "")
+    normalized_record.setdefault("email", "")
+    normalized_record.setdefault("full_name", "")
+    normalized_record.setdefault("hashed_password", "")
+    normalized_record.setdefault("auth_provider", "local")
+    return normalized_record
+
+
 def _firebase_user_store_enabled() -> bool:
     return not FIREBASE_USER_STORE_DISABLED and not SKIP_FIREBASE_INIT and bool(firebase_admin._apps)
 
@@ -302,8 +325,9 @@ def _load_user_from_store(username: str) -> Optional[dict[str, Any]]:
     try:
         user_record = firebase_db.reference(f"{USER_STORE_PATH}/{username}").get()
         if isinstance(user_record, dict):
-            fake_users_db[username] = user_record
-            return user_record
+            normalized_record = _normalize_user_record(user_record)
+            fake_users_db[username] = normalized_record
+            return normalized_record
     except Exception as exc:
         print(f"Error al cargar usuario desde Firebase: {exc}")
     return None
@@ -317,7 +341,7 @@ def _load_all_users_from_store() -> None:
         if isinstance(users, dict):
             for username, user_record in users.items():
                 if isinstance(user_record, dict):
-                    fake_users_db[str(username)] = user_record
+                    fake_users_db[str(username)] = _normalize_user_record(user_record)
     except Exception as exc:
         print(f"Error al listar usuarios desde Firebase: {exc}")
 
@@ -363,6 +387,7 @@ def _build_bootstrap_admin_from_firebase_identity(uid: str, email: Optional[str]
 def get_user_by_firebase_identity(uid: str, email: Optional[str]) -> Optional[UserInDB]:
     user_record = _find_cached_user_by_firebase_identity(uid, email)
     if user_record:
+        user_record = _normalize_user_record(user_record)
         if not user_record.get("uid"):
             user_record["uid"] = uid
         if email and str(user_record.get("email", "")).strip().lower() != email.strip().lower():
@@ -373,6 +398,7 @@ def get_user_by_firebase_identity(uid: str, email: Optional[str]) -> Optional[Us
     _load_all_users_from_store()
     user_record = _find_cached_user_by_firebase_identity(uid, email)
     if user_record:
+        user_record = _normalize_user_record(user_record)
         if not user_record.get("uid"):
             user_record["uid"] = uid
         if email and str(user_record.get("email", "")).strip().lower() != email.strip().lower():
@@ -487,7 +513,8 @@ def verify_password(plain_password: str, hashed_password: Optional[str]) -> bool
 
 def get_user(db: Mapping[str, dict[str, Any]], username: str) -> Optional[UserInDB]:
     if username in db:
-        user_dict = db[username]
+        user_dict = _normalize_user_record(db[username])
+        fake_users_db[username] = user_dict
         return UserInDB(**user_dict)
     user_dict = _load_user_from_store(username)
     if user_dict:

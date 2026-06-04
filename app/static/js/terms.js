@@ -4,7 +4,7 @@ const params = new URLSearchParams(window.location.search);
 const requestedNext = params.get("next");
 const nextUrl = requestedNext && requestedNext.startsWith("/") && !requestedNext.startsWith("//")
     ? requestedNext
-    : (role === "auditor" ? "/history" : "/");
+    : (role === "auditor" ? "/schedule" : "/");
 
 const acceptCheck = document.getElementById("accept-check");
 const acceptBtn = document.getElementById("accept-btn");

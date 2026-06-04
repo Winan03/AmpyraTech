@@ -162,6 +162,12 @@
             background: var(--accent-danger); margin-right: 8px;
             box-shadow: 0 0 10px var(--accent-danger);
         }
+        td.level-advertencia { font-weight: 700; color: var(--accent-warning); font-size: 1.1em; }
+        td.level-advertencia .icon {
+            display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+            background: var(--accent-warning); margin-right: 8px;
+            box-shadow: 0 0 10px var(--accent-warning);
+        }
         .btn-detail {
             background: var(--bg-tertiary); border: 2px solid var(--border-color);
             color: var(--text-primary); padding: 8px 16px; border-radius: 10px;
@@ -305,7 +311,7 @@
             .summary-grid { grid-template-columns: 1fr; }
         }
     </style>
-    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260601-5">
+    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260602-2">
 </head>
 <body data-theme="light">
     <div class="app-shell">
@@ -320,7 +326,7 @@
             </div>
             <nav class="sidebar-nav" aria-label="Navegaci&oacute;n principal">
                 <div class="sidebar-section-label">Navegaci&oacute;n</div>
-                <a class="sidebar-link" href="/" data-roles="admin,operativo">
+                <a class="sidebar-link" href="/" data-roles="admin,auditor">
                     <span class="sidebar-icon" aria-hidden="true">DB</span>
                     <span class="sidebar-copy">
                         <strong>Dashboard</strong>
@@ -339,6 +345,13 @@
                     <span class="sidebar-copy">
                         <strong>Historial</strong>
                         <small>Registros el&eacute;ctricos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/schedule" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">AG</span>
+                    <span class="sidebar-copy">
+                        <strong>Agenda</strong>
+                        <small>Horarios del laboratorio</small>
                     </span>
                 </a>
                 <a class="sidebar-link" href="/users" data-roles="admin">
@@ -380,12 +393,16 @@
                     
                     <span class="nav-btn role-chip" data-role-badge>Validando rol...</span>
 
-                    <a href="/" class="nav-btn mobile-nav" data-roles="admin,operativo">
+                    <a href="/" class="nav-btn mobile-nav" data-roles="admin,auditor">
                         Dashboard
                     </a>
 
                     <a href="/history" class="nav-btn mobile-nav" data-roles="admin,auditor">
                         Historial
+                    </a>
+
+                    <a href="/schedule" class="nav-btn mobile-nav" data-roles="admin,auditor">
+                        Agenda
                     </a>
 
                     <a href="/users" class="nav-btn mobile-nav" data-roles="admin">
@@ -411,7 +428,7 @@
             <div class="stat-card warning">
                 <div class="stat-icon">📍</div>
                 <div class="stat-info">
-                    <h3>Salón con más alertas</h3>
+                    <h3>Ramal con más alertas</h3>
                     <div class="stat-value" id="top-sensor">--</div>
                 </div>
             </div>
@@ -427,7 +444,7 @@
             <div class="stat-card warning">
                 <div class="stat-icon">🖥️</div>
                 <div class="stat-info">
-                    <h3>Tipo frecuente</h3>
+                    <h3>Evento frecuente</h3>
                     <div class="stat-value" id="top-device">--</div>
                 </div>
             </div>
@@ -451,14 +468,14 @@
         </div>
 
         <div class="table-section">
-            <h2 class="table-title">📑 Bitácora de Alertas de Sobrecarga</h2>
+            <h2 class="table-title">📑 Bitácora de Alertas Eléctricas</h2>
             <div class="table-wrapper">
                 <table>
                     <thead>
                         <tr>
                             <th>Nivel</th>
                             <th>Fecha y Hora</th>
-                            <th>Salón</th>
+                            <th>Ramal</th>
                             <th>Evento</th>
                             <th>Acción</th>
                         </tr>
@@ -497,7 +514,7 @@
             <div class="modal-body">
                 <div class="detail-grid">
                     <div class="detail-item">
-                        <label>Salón</label>
+                        <label>Ramal</label>
                         <div class="value" id="modal-sensor-id">--</div>
                     </div>
                     <div class="detail-item">
@@ -512,13 +529,13 @@
                         <div class="value danger" id="modal-irms">-- A</div>
                     </div>
                     <div class="detail-item">
-                        <label>Umbral Configurado</label>
+                        <label>Referencia de alerta</label>
                         <div class="value success" id="modal-threshold">-- A</div>
                     </div>
                 </div>
 
                 <div class="detail-item" style="margin-bottom: 24px;">
-                    <label>Dispositivo Detectado</label>
+                    <label>Estado eléctrico</label>
                     <div class="value" id="modal-device">--</div>
                 </div>
                 
@@ -526,7 +543,7 @@
                     <strong>Análisis:</strong> La alerta se generó porque la corriente medida 
                     (<strong id="modal-irms-info">--</strong>) superó el umbral 
                     (<strong id="modal-threshold-info">--</strong>) 
-                    establecido para este salón.
+                    o porque hubo consumo fuera del horario autorizado.
                 </div>
             </div>
         </div>
@@ -597,14 +614,20 @@
         let allAlertData = []; // Almacena TODOS los datos
         let currentPage = 1;
         const ROWS_PER_PAGE = 15; // Mostrar 15 alertas por página
-        const ROOM_CONFIG = {
-            "LAB-PC-01": "Laboratorio de Cómputo 01",
-            "LAB-PC-02": "Laboratorio de Cómputo 02",
-            "LAB-PC-03": "Laboratorio de Cómputo 03",
-        };
-
         function roomName(sensorId) {
-            return ROOM_CONFIG[sensorId] || sensorId;
+            const match = String(sensorId || "").match(/^C-(\d{2})$/);
+            if (!match) return sensorId;
+            const index = Number(match[1]);
+            const pcStart = ((index - 1) * 2) + 1;
+            const pcEnd = index * 2;
+            return `${sensorId} (PC ${String(pcStart).padStart(2, "0")}-${String(pcEnd).padStart(2, "0")})`;
+        }
+
+        function alertTypeLabel(record) {
+            if (record.alert_type === "out_of_schedule_consumption" || record.estado === "Fuera de horario") {
+                return "Consumo fuera de horario";
+            }
+            return "Sobrecarga electrica";
         }
 
         /**
@@ -669,7 +692,7 @@
             document.getElementById('top-sensor').textContent = roomName(topSensor);
 
             const deviceCounts = alertData.reduce((counts, alert) => {
-                const deviceType = alert.device.type || "Desconocido";
+                const deviceType = alertTypeLabel(alert);
                 counts[deviceType] = (counts[deviceType] || 0) + 1;
                 return counts;
             }, {});
@@ -720,11 +743,13 @@
                     openAlertModal(record);
                 });
                 
-                const level = "Critico";
-                const eventMessage = `Sobrecarga Detectada (${record.irms.toFixed(3)} A)`;
+                const isScheduleAlert = record.alert_type === "out_of_schedule_consumption" || record.estado === "Fuera de horario";
+                const level = isScheduleAlert ? "Advertencia" : "Critico";
+                const levelClass = isScheduleAlert ? "level-advertencia" : "level-critico";
+                const eventMessage = `${alertTypeLabel(record)} (${record.irms.toFixed(3)} A)`;
 
                 tr.innerHTML = `
-                    <td class="level-critico">
+                    <td class="${levelClass}">
                         <span class="icon"></span>
                         ${level.toUpperCase()}
                     </td>
@@ -752,14 +777,16 @@
                 hour: '2-digit', minute: '2-digit'
             });
 
+            const isScheduleAlert = record.alert_type === "out_of_schedule_consumption" || record.estado === "Fuera de horario";
             const irmsVal = record.irms.toFixed(3) + " A";
-            const thresholdVal = record.threshold.corriente.toFixed(1) + " A";
+            const thresholdCurrent = Number(record.threshold && record.threshold.corriente) || 0;
+            const thresholdVal = isScheduleAlert ? "Agenda no autorizada" : thresholdCurrent.toFixed(1) + " A";
 
             document.getElementById('modal-sensor-id').textContent = roomName(record.sensor_id);
             document.getElementById('modal-timestamp').textContent = timestamp;
             document.getElementById('modal-irms').textContent = irmsVal;
             document.getElementById('modal-threshold').textContent = thresholdVal;
-            document.getElementById('modal-device').textContent = record.device.type || "No especificado";
+            document.getElementById('modal-device').textContent = (record.device && record.device.type) || "No especificado";
             document.getElementById('modal-irms-info').textContent = irmsVal;
             
             // ¡¡AQUÍ ESTÁ LA CORRECCIÓN DEL BUG!!
@@ -779,7 +806,7 @@
         document.addEventListener("DOMContentLoaded", async function() {
             console.log('🚀 SafyraShield Premium - Inicializando Página de Bitácora de Alertas');
 
-            currentUser = await SafyraAuth.requireRoles(['admin', 'operativo', 'auditor']);
+            currentUser = await SafyraAuth.requireRoles(['admin', 'auditor']);
             if (!currentUser) return;
 
             loadTheme();
@@ -822,6 +849,6 @@
                 }
             });
         });
-    </script>
+</script>
 </body>
 </html>

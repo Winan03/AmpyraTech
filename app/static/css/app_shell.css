@@ -1,5 +1,6 @@
 body {
     padding: 0 !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background:
         linear-gradient(135deg, #eef3f8 0%, #f7f8fb 52%, #eef4f6 100%),
         radial-gradient(circle at 18% 18%, rgba(13, 103, 189, 0.14), transparent 34%) !important;
@@ -13,6 +14,10 @@ body::before {
     display: none !important;
 }
 
+[hidden] {
+    display: none !important;
+}
+
 :root {
     --sidebar-turquoise: #18b6ce;
     --sidebar-blue: #0f6fd1;
@@ -22,6 +27,7 @@ body::before {
     --icon-dashboard: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='3' width='7' height='7' rx='1.5' fill='black'/%3E%3Crect x='14' y='3' width='7' height='7' rx='1.5' fill='black'/%3E%3Crect x='3' y='14' width='7' height='7' rx='1.5' fill='black'/%3E%3Crect x='14' y='14' width='7' height='7' rx='1.5' fill='black'/%3E%3C/svg%3E");
     --icon-alerts: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V9a7 7 0 0 0-14 0v7l-2 2v1h18v-1l-2-2Z' fill='black'/%3E%3C/svg%3E");
     --icon-history: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3a9 9 0 1 0 8.3 5.5h-2.4A7 7 0 1 1 12 5v4l5-5-5-4v3Zm-1 5h2v5l4 2-.9 1.8-5.1-2.8V8Z' fill='black'/%3E%3C/svg%3E");
+    --icon-schedule: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 2h2v3h6V2h2v3h3v19H4V5h3V2Zm13 9H6v11h14V11ZM6 7v2h14V7H6Zm3 6h4v4H9v-4Z' fill='black'/%3E%3C/svg%3E");
     --icon-users: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4 0-7 2-7 4.5V20h14v-2.5C16 15 13 13 9 13Zm8.5-1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0 1.5c-.8 0-1.5.1-2.2.4 1.6.9 2.7 2.2 2.7 3.6V20h4v-2.2c0-2.3-2-4.3-4.5-4.3Z' fill='black'/%3E%3C/svg%3E");
     --icon-user: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Z' fill='black'/%3E%3C/svg%3E");
     --icon-sound: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 9v6h4l5 4V5L8 9H4Zm13.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4-2.7-2.7Z' fill='black'/%3E%3C/svg%3E");
@@ -203,6 +209,10 @@ body[data-theme="dark"] .sidebar-brand span {
 
 .sidebar-link[href="/history"] .sidebar-icon {
     --sidebar-icon: var(--icon-history);
+}
+
+.sidebar-link[href="/schedule"] .sidebar-icon {
+    --sidebar-icon: var(--icon-schedule);
 }
 
 .sidebar-link[href="/users"] .sidebar-icon {

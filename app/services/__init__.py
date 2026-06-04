@@ -1,0 +1,1 @@
+"""Servicios externos de SafyraShield."""

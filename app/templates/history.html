@@ -379,6 +379,11 @@
             font-weight: 600;
         }
 
+        td .state-fuera-de-horario {
+            color: var(--accent-warning);
+            font-weight: 700;
+        }
+
         .loading-text, .no-data-text {
             text-align: center;
             padding: 40px;
@@ -460,7 +465,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260601-5">
+    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260602-2">
 </head>
 <body data-theme="light">
 
@@ -476,7 +481,7 @@
             </div>
             <nav class="sidebar-nav" aria-label="Navegaci&oacute;n principal">
                 <div class="sidebar-section-label">Navegaci&oacute;n</div>
-                <a class="sidebar-link" href="/" data-roles="admin,operativo">
+                <a class="sidebar-link" href="/" data-roles="admin,auditor">
                     <span class="sidebar-icon" aria-hidden="true">DB</span>
                     <span class="sidebar-copy">
                         <strong>Dashboard</strong>
@@ -495,6 +500,13 @@
                     <span class="sidebar-copy">
                         <strong>Historial</strong>
                         <small>Registros el&eacute;ctricos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/schedule" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">AG</span>
+                    <span class="sidebar-copy">
+                        <strong>Agenda</strong>
+                        <small>Horarios del laboratorio</small>
                     </span>
                 </a>
                 <a class="sidebar-link" href="/users" data-roles="admin">
@@ -536,7 +548,7 @@
                     
                     <span class="nav-btn role-chip" data-role-badge>Validando rol...</span>
 
-                    <a href="/" class="nav-btn mobile-nav" data-roles="admin,operativo">
+                    <a href="/" class="nav-btn mobile-nav" data-roles="admin,auditor">
                         🏠 Volver al Dashboard
                     </a>
 
@@ -557,12 +569,9 @@
 
         <div class="history-controls">
             <div class="control-group">
-                <label for="sensor-select">Salón</label>
+                <label for="sensor-select">Ramal</label>
                 <select id="sensor-select">
-                    <option value="LAB-PC-01">Laboratorio de Cómputo 01</option>
-                    <option value="LAB-PC-02">Laboratorio de Cómputo 02</option>
-                    <option value="LAB-PC-03">Laboratorio de Cómputo 03</option>
-                    <option value="">Todos los salones</option>
+                    <option value="">Todos los ramales</option>
                 </select>
             </div>
             
@@ -603,11 +612,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Salón</th>
+                            <th>Ramal</th>
                             <th>Fecha y Hora</th>
                             <th>Corriente (A)</th>
                             <th>Potencia (W)</th>
-                            <th>Dispositivo Detectado</th>
+                            <th>Estado eléctrico</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
@@ -689,15 +698,15 @@
         // LÓGICA DE PÁGINA DE HISTORIAL (¡CORREGIDA + PAGINACIÓN!)
         // ======================================================================
         
-        const SENSOR_IDS = ["LAB-PC-01", "LAB-PC-02", "LAB-PC-03"];
-        const ROOM_CONFIG = {
-            "LAB-PC-01": "Laboratorio de Cómputo 01",
-            "LAB-PC-02": "Laboratorio de Cómputo 02",
-            "LAB-PC-03": "Laboratorio de Cómputo 03",
-        };
+        const SENSOR_IDS = Array.from({ length: 10 }, (_, index) => `C-${String(index + 1).padStart(2, "0")}`);
 
         function roomName(sensorId) {
-            return ROOM_CONFIG[sensorId] || sensorId;
+            const match = String(sensorId || "").match(/^C-(\d{2})$/);
+            if (!match) return sensorId;
+            const index = Number(match[1]);
+            const pcStart = ((index - 1) * 2) + 1;
+            const pcEnd = index * 2;
+            return `${sensorId} (PC ${String(pcStart).padStart(2, "0")}-${String(pcEnd).padStart(2, "0")})`;
         }
         
         const sensorSelect = document.getElementById('sensor-select');
@@ -707,6 +716,17 @@
         const exportCsvBtn = document.getElementById('export-csv-btn');
         const exportExcelBtn = document.getElementById('export-excel-btn');
         const tableBody = document.getElementById('history-table-body');
+
+        function populateSensorSelect() {
+            if (!sensorSelect) return;
+            sensorSelect.innerHTML = '<option value="">Todos los ramales</option>';
+            SENSOR_IDS.forEach(sensorId => {
+                const option = document.createElement("option");
+                option.value = sensorId;
+                option.textContent = roomName(sensorId);
+                sensorSelect.appendChild(option);
+            });
+        }
 
         // --- Variables de Paginación ---
         const paginationControls = document.getElementById('pagination-controls');
@@ -822,9 +842,9 @@
                     year: 'numeric', month: '2-digit', day: '2-digit',
                     hour: '2-digit', minute: '2-digit', second: '2-digit'
                 });
-                
-                const estadoClass = `state-${record.estado.toLowerCase()}`; 
-                
+
+                const estadoClass = `state-${String(record.estado || "").toLowerCase().replace(/\s+/g, "-")}`;
+
                 tr.innerHTML = `
                     <td><strong>${roomName(record.sensor_id)}</strong></td>
                     <td>${timestamp}</td>
@@ -892,12 +912,11 @@
         document.addEventListener("DOMContentLoaded", async function() {
             console.log('🚀 SafyraShield Premium - Inicializando Página de Historial');
 
-            currentUser = await SafyraAuth.requireRoles(['admin', 'auditor'], {
-                redirectByRole: { operativo: '/' }
-            });
+            currentUser = await SafyraAuth.requireRoles(['admin', 'auditor']);
             if (!currentUser) return;
 
             loadTheme();
+            populateSensorSelect();
             
             filterBtn.addEventListener('click', fetchHistory);
             exportCsvBtn.addEventListener('click', () => exportData('csv'));

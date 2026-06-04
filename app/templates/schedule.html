@@ -1,0 +1,226 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafyraShield - Agenda del Laboratorio</title>
+    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260602-2">
+    <link rel="stylesheet" href="/static/css/schedule.css?v=20260603-1">
+</head>
+<body data-theme="light">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <img class="sidebar-logo-img" src="/static/img/safyrashield-logo.png" alt="SafyraShield IoT" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
+                <span class="sidebar-logo-fallback" hidden>S</span>
+                <div>
+                    <strong>SafyraShield IoT</strong>
+                    <span>Monitoreo inteligente</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Navegaci&oacute;n principal">
+                <div class="sidebar-section-label">Navegaci&oacute;n</div>
+                <a class="sidebar-link" href="/" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true"></span>
+                    <span class="sidebar-copy">
+                        <strong>Dashboard</strong>
+                        <small>Lectura por sal&oacute;n</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/alerts">
+                    <span class="sidebar-icon" aria-hidden="true"></span>
+                    <span class="sidebar-copy">
+                        <strong>Alertas</strong>
+                        <small>Eventos cr&iacute;ticos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/history" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true"></span>
+                    <span class="sidebar-copy">
+                        <strong>Historial</strong>
+                        <small>Registros el&eacute;ctricos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link active" href="/schedule" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true"></span>
+                    <span class="sidebar-copy">
+                        <strong>Agenda</strong>
+                        <small>Horarios del laboratorio</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/users" data-roles="admin">
+                    <span class="sidebar-icon" aria-hidden="true"></span>
+                    <span class="sidebar-copy">
+                        <strong>Usuarios</strong>
+                        <small>Roles y estados</small>
+                    </span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-session">
+                    <span class="sidebar-user-icon" aria-hidden="true"></span>
+                    <span class="sidebar-user-copy">
+                        <strong data-user-label>Validando usuario...</strong>
+                        <small data-role-badge>Validando rol...</small>
+                    </span>
+                </div>
+                <button class="sidebar-action logout" type="button" onclick="logout()">Cerrar sesi&oacute;n</button>
+            </div>
+        </aside>
+
+        <main class="workspace schedule-workspace">
+            <div class="schedule-container">
+                <header class="schedule-hero">
+                    <div>
+                        <span class="schedule-eyebrow">Direcci&oacute;n acad&eacute;mica</span>
+                        <h1>Agenda del Laboratorio</h1>
+                        <p>Horarios recurrentes y d&iacute;as sin clase para validar el consumo el&eacute;ctrico del sal&oacute;n.</p>
+                    </div>
+                    <div class="schedule-hero-actions">
+                        <button class="theme-toggle schedule-toggle" type="button" onclick="toggleTheme()">
+                            <span id="theme-text">Modo Claro</span>
+                        </button>
+                        <span class="schedule-role" data-role-badge>Validando rol...</span>
+                        <span class="schedule-status"><span></span>Sistema Activo</span>
+                    </div>
+                </header>
+
+                <section class="schedule-note">
+                    <strong>Regla operativa</strong>
+                    <p>Una clase regular se repite cada semana dentro de su vigencia. Un d&iacute;a sin clase anula el horario normal para que cualquier consumo relevante se marque como fuera de horario.</p>
+                </section>
+
+                <section class="schedule-board-card">
+                    <div class="schedule-toolbar">
+                        <div class="week-controls">
+                            <button id="prev-week" type="button" aria-label="Semana anterior">&lsaquo;</button>
+                            <strong id="week-range">Cargando semana...</strong>
+                            <button id="next-week" type="button" aria-label="Semana siguiente">&rsaquo;</button>
+                            <button id="today-week" type="button">Hoy</button>
+                        </div>
+                        <span class="room-chip">Laboratorio de C&oacute;mputo</span>
+                    </div>
+
+                    <div class="schedule-main">
+                        <section class="calendar-panel">
+                            <div id="calendar-board" class="calendar-board" aria-live="polite"></div>
+                            <div class="calendar-legend">
+                                <span><i class="legend-dot class"></i>Clase regular</span>
+                                <span><i class="legend-dot no_class"></i>D&iacute;a sin clase</span>
+                            </div>
+                        </section>
+
+                        <aside class="schedule-side-panel">
+                            <section id="schedule-readonly-panel" class="schedule-readonly" hidden>
+                                <span>Vista de lectura</span>
+                                <h2>Agenda definida por Direcci&oacute;n</h2>
+                                <p>Admin/Custodio puede revisar los horarios para interpretar alertas, pero no modificarlos.</p>
+                            </section>
+
+                            <section class="schedule-list-panel">
+                                <div>
+                                    <div>
+                                        <span>Bloques registrados</span>
+                                        <h2>Uso recurrente y suspensiones</h2>
+                                    </div>
+                                    <div class="schedule-list-actions">
+                                        <button id="open-schedule-modal" type="button" class="schedule-add-btn">A&ntilde;adir horario de uso del laboratorio</button>
+                                        <button id="refresh-schedules-list" type="button" aria-label="Actualizar horarios">&#8635;</button>
+                                    </div>
+                                </div>
+                                <div id="schedule-list" class="schedule-list">Cargando horarios...</div>
+                            </section>
+                        </aside>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="schedule-modal" class="schedule-modal" hidden aria-hidden="true">
+        <div class="schedule-modal-backdrop" data-modal-close></div>
+        <section class="schedule-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="schedule-modal-title">
+            <div class="schedule-modal-header">
+                <div>
+                    <span id="schedule-modal-eyebrow" class="schedule-modal-eyebrow">Registro limitado</span>
+                    <h2 id="schedule-modal-title" class="schedule-modal-title">Nuevo bloque</h2>
+                </div>
+                <button id="close-schedule-modal" class="schedule-modal-close" type="button" aria-label="Cerrar modal">&times;</button>
+            </div>
+            <p id="schedule-modal-hint" class="schedule-form-hint">Registra un bloque recurrente de uso del laboratorio o una suspensi&oacute;n puntual. Para feriados y paros usa "D&iacute;a sin clase" con la misma fecha en desde/hasta. No se aceptan horas fuera del rango escolar ni nombres con n&uacute;meros.</p>
+
+            <form id="schedule-form" class="schedule-form" novalidate>
+                <input id="room-id" name="room_id" type="hidden" value="LAB-PC-01">
+                <input id="source-schedule-id" name="source_schedule_id" type="hidden" value="">
+
+                <div class="schedule-form-grid">
+                    <label class="schedule-field">
+                        <span>Tipo de bloque</span>
+                        <select id="schedule-kind" name="kind" required>
+                            <option value="class">Clase regular</option>
+                            <option value="no_class">D&iacute;a sin clase o feriado</option>
+                        </select>
+                    </label>
+
+                    <label class="schedule-field">
+                        <span>Estado</span>
+                        <select id="schedule-status" name="status" required>
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
+                        </select>
+                    </label>
+
+                    <label class="schedule-field schedule-field--full">
+                        <span>Nombre visible</span>
+                        <input id="label" name="label" type="text" value="Clase de computaci&oacute;n" maxlength="80" required autocomplete="off">
+                    </label>
+
+                    <label class="schedule-field schedule-field--full">
+                        <span>D&iacute;a de la semana</span>
+                        <select id="day-of-week" name="day_of_week" required>
+                            <option value="monday">Lunes</option>
+                            <option value="tuesday">Martes</option>
+                            <option value="wednesday">Mi&eacute;rcoles</option>
+                            <option value="thursday">Jueves</option>
+                            <option value="friday">Viernes</option>
+                        </select>
+                    </label>
+
+                    <div class="time-grid schedule-field--full">
+                        <label class="schedule-field">
+                            <span>Inicio</span>
+                            <select id="start-time" name="start_time" required></select>
+                        </label>
+                        <label class="schedule-field">
+                            <span>Fin</span>
+                            <select id="end-time" name="end_time" required></select>
+                        </label>
+                    </div>
+
+                    <div class="time-grid schedule-field--full">
+                        <label class="schedule-field">
+                            <span>Vigente desde</span>
+                            <input id="valid-from" name="valid_from" type="date">
+                        </label>
+                        <label class="schedule-field">
+                            <span>Vigente hasta</span>
+                            <input id="valid-to" name="valid_to" type="date">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="schedule-actions">
+                    <button class="schedule-secondary" id="clear-form" type="button">Limpiar</button>
+                    <button class="schedule-primary" id="schedule-submit" type="submit">Guardar</button>
+                </div>
+                <div id="schedule-message" class="schedule-message"></div>
+            </form>
+        </section>
+    </div>
+
+    <script src="/static/js/rbac.js?v=20260602-1"></script>
+    <script src="/static/js/schedule.js?v=20260603-1"></script>
+</body>
+</html>

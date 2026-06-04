@@ -1,7 +1,7 @@
-# tests/conftest.py
+﻿# tests/conftest.py
 """
-Configuración base para todas las pruebas de SafyraShield
-Incluye fixtures compartidos y configuración de pytest
+ConfiguraciÃ³n base para todas las pruebas de SafyraShield
+Incluye fixtures compartidos y configuraciÃ³n de pytest
 """
 
 import pytest
@@ -14,7 +14,6 @@ from passlib.context import CryptContext
 
 # Configurar variables de entorno ANTES de importar la app
 TEST_ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD") or secrets.token_urlsafe(24)
-TEST_OPERATIVO_PASSWORD = secrets.token_urlsafe(24)
 TEST_AUDITOR_PASSWORD = secrets.token_urlsafe(24)
 TEST_CONGELADO_PASSWORD = secrets.token_urlsafe(24)
 
@@ -35,24 +34,16 @@ os.environ["ADMIN_PASSWORD_HASH"] = CryptContext(schemes=["bcrypt"], deprecated=
 )
 os.environ["TEST_ADMIN_PASSWORD"] = TEST_ADMIN_PASSWORD
 os.environ["TERMS_VERSION"] = "2026-test"
-os.environ["TERMS_REQUIRED_ROLES"] = "admin,operativo,auditor"
+os.environ["TERMS_REQUIRED_ROLES"] = "admin,auditor"
+os.environ["SAFYRA_IOT_TOKEN"] = "test-iot-token"
 
 from app.main import app
 from app.routers.auth_api import create_access_token, fake_users_db, fake_consent_db, pwd_context, TERMS_VERSION
 
 fake_users_db.update({
-    "operativo": {
-        "username": "operativo",
-        "full_name": "Usuario Operativo",
-        "email": "operativo@example.test",
-        "role": "operativo",
-        "status": "activo",
-        "disabled": False,
-        "hashed_password": pwd_context.hash(TEST_OPERATIVO_PASSWORD),
-    },
     "auditor": {
         "username": "auditor",
-        "full_name": "Usuario Auditor",
+        "full_name": "Direccion",
         "email": "auditor@example.test",
         "role": "auditor",
         "status": "activo",
@@ -63,7 +54,7 @@ fake_users_db.update({
         "username": "congelado",
         "full_name": "Usuario Congelado",
         "email": "congelado@example.test",
-        "role": "operativo",
+        "role": "auditor",
         "status": "congelado",
         "disabled": False,
         "hashed_password": pwd_context.hash(TEST_CONGELADO_PASSWORD),
@@ -90,34 +81,29 @@ def test_client():
 
 @pytest.fixture(scope="function")
 def token_valido():
-    """Token JWT válido para pruebas"""
+    """Token JWT vÃ¡lido para pruebas"""
     return create_access_token(data={"sub": "admin", "role": "admin"})
 
 
 @pytest.fixture(scope="function")
 def headers_autenticados(token_valido):
-    """Headers con autenticación válida"""
+    """Headers con autenticaciÃ³n vÃ¡lida"""
     return {"Authorization": f"Bearer {token_valido}"}
 
-
-@pytest.fixture(scope="function")
-def headers_operativo():
-    """Headers con autenticación de usuario operativo"""
-    token = create_access_token(data={"sub": "operativo", "role": "operativo"})
-    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture(scope="function")
 def headers_auditor():
-    """Headers con autenticación de usuario auditor"""
+    """Headers con autenticaciÃ³n de usuario auditor"""
     token = create_access_token(data={"sub": "auditor", "role": "auditor"})
     return {"Authorization": f"Bearer {token}"}
+
 
 
 @pytest.fixture(scope="function")
 def headers_congelado():
     """Headers de usuario no activo"""
-    token = create_access_token(data={"sub": "congelado", "role": "operativo"})
+    token = create_access_token(data={"sub": "congelado", "role": "auditor"})
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -151,7 +137,7 @@ def mock_firebase_vacio():
 
 @pytest.fixture(scope="function")
 def mock_history_data():
-    """Datos históricos simulados"""
+    """Datos histÃ³ricos simulados"""
     return {
         "2025-01-15T10:00:00": {
             "irms": 2.3,
@@ -188,17 +174,17 @@ def reset_firebase_mock():
         yield mock_db
 
 
-# Configuración de pytest
+# ConfiguraciÃ³n de pytest
 def pytest_configure(config):
-    """Configuración adicional de pytest"""
+    """ConfiguraciÃ³n adicional de pytest"""
     config.addinivalue_line(
-        "markers", "integracion: marca pruebas de integración"
+        "markers", "integracion: marca pruebas de integraciÃ³n"
     )
     config.addinivalue_line(
         "markers", "unitaria: marca pruebas unitarias"
     )
     config.addinivalue_line(
-        "markers", "autenticacion: pruebas de autenticación"
+        "markers", "autenticacion: pruebas de autenticaciÃ³n"
     )
 
 
