@@ -1,6 +1,6 @@
 import pytest
 
-import simulator
+from tools.iot import simulator
 
 
 def test_simulador_usa_diez_ramales_por_defecto(monkeypatch):
