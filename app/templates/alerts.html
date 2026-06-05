@@ -648,8 +648,8 @@
             try {
                 let url = `/api/data/alerts?`;
                 const params = new URLSearchParams();
-                if (startDate) params.append('start_date', encodeURIComponent(startDate));
-                if (endDate) params.append('end_date', encodeURIComponent(endDate));
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
                 url += params.toString();
 
                 const response = await fetch(url, { headers: AUTH_HEADER });

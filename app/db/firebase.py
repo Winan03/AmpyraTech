@@ -8,6 +8,7 @@ import binascii
 from collections.abc import Mapping, Sequence
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta, timezone
+from urllib.parse import unquote
 import io
 import uuid
 from openpyxl import Workbook
@@ -768,15 +769,56 @@ def _record_timestamp(record_key: str, record: Mapping[str, Any]) -> str:
     return record_key
 
 
-def _within_date_range(timestamp: str, start_date: str = None, end_date: str = None) -> bool:
-    if start_date and timestamp < start_date:
+def _parse_datetime_utc(value: object, *, assume_local: bool, end_of_day: bool = False) -> Optional[datetime]:
+    raw_value = unquote(str(value or "").strip())
+    if not raw_value:
+        return None
+    if len(raw_value) == 10:
+        raw_value = f"{raw_value}T{'23:59:59.999999' if end_of_day else '00:00:00'}"
+    try:
+        parsed = datetime.fromisoformat(raw_value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=LOCAL_TIMEZONE if assume_local else timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _record_datetime_utc(record_key: str, record: Mapping[str, Any]) -> Optional[datetime]:
+    timestamp_utc = _parse_datetime_utc(record.get("timestamp_utc"), assume_local=False)
+    if timestamp_utc is not None:
+        return timestamp_utc
+    timestamp = _parse_datetime_utc(record.get("timestamp"), assume_local=True)
+    if timestamp is not None:
+        return timestamp
+    return _parse_datetime_utc(record_key, assume_local=True)
+
+
+def _within_date_range(record_key: str, record: Mapping[str, Any], start_date: str = None, end_date: str = None) -> bool:
+    record_datetime = _record_datetime_utc(record_key, record)
+    start_datetime = _parse_datetime_utc(start_date, assume_local=True)
+    end_datetime = _parse_datetime_utc(end_date, assume_local=True, end_of_day=True)
+    if (start_datetime or end_datetime) and record_datetime is None:
         return False
-    if end_date and timestamp > end_date:
+    if start_datetime and record_datetime and record_datetime < start_datetime:
+        return False
+    if end_datetime and record_datetime and record_datetime > end_datetime:
         return False
     return True
 
 
-def get_history_data(sensor_id: str, limit: int = 20, start_date: str = None, end_date: str = None) -> List[Dict]:
+def _is_reportable_history_record(record: Mapping[str, Any]) -> bool:
+    estado = str(record.get("estado") or "Normal")
+    return estado in {"Sobrecarga", "Fuera de horario"} or bool(record.get("is_overload")) or bool(record.get("is_out_of_schedule"))
+
+
+def get_history_data(
+    sensor_id: str,
+    limit: int = 20,
+    start_date: str = None,
+    end_date: str = None,
+    reportable_only: bool = False,
+) -> List[Dict]:
     """
     Obtiene el historial con filtros de fecha (HU-010)
     """
@@ -791,8 +833,10 @@ def get_history_data(sensor_id: str, limit: int = 20, start_date: str = None, en
             for key, value in data.items():
                 if not isinstance(value, dict):
                     continue
+                if reportable_only and not _is_reportable_history_record(value):
+                    continue
                 timestamp = _record_timestamp(key, value)
-                if not _within_date_range(timestamp, start_date, end_date):
+                if not _within_date_range(key, value, start_date, end_date):
                     continue
                 irms = float(value.get('irms', 0.0))
                 # Usamos la nueva lógica de detección aquí también
@@ -805,8 +849,12 @@ def get_history_data(sensor_id: str, limit: int = 20, start_date: str = None, en
                     "irms": irms,
                     "potencia": float(value.get('potencia', 0.0)),
                     "estado": value.get('estado', 'Normal'), # El estado sigue siendo el mismo
-                    "device": device_info # Pero la info del dispositivo es más rica
+                    "device": device_info,
+                    "_sort_at": (_record_datetime_utc(key, value) or datetime.min.replace(tzinfo=timezone.utc)).isoformat(),
                 })
+            history.sort(key=lambda record: record["_sort_at"], reverse=True)
+            for record in history:
+                record.pop("_sort_at", None)
             return history
         return []
     except Exception as e:
@@ -837,7 +885,7 @@ def get_alert_history(start_date: str = None, end_date: str = None) -> List[Dict
                     if estado not in alert_states:
                         continue
                     timestamp = _record_timestamp(key, value)
-                    if not _within_date_range(timestamp, start_date, end_date):
+                    if not _within_date_range(key, value, start_date, end_date):
                         continue
 
                     irms = float(value.get('irms', 0.0))
@@ -854,10 +902,13 @@ def get_alert_history(start_date: str = None, end_date: str = None) -> List[Dict
                         "potencia": float(value.get('potencia', 0.0)),
                         "estado": estado,
                         "device": device_info,
-                        "threshold": threshold 
+                        "threshold": threshold,
+                        "_sort_at": (_record_datetime_utc(key, value) or datetime.min.replace(tzinfo=timezone.utc)).isoformat(),
                     })
-        
-        all_alerts.sort(key=lambda x: x['timestamp'], reverse=True)
+
+        all_alerts.sort(key=lambda x: x["_sort_at"], reverse=True)
+        for alert in all_alerts:
+            alert.pop("_sort_at", None)
         return all_alerts
         
     except Exception as e:
@@ -868,7 +919,7 @@ def get_alert_history(start_date: str = None, end_date: str = None) -> List[Dict
 # FUNCIONES DE EXPORTACIÓN (Sin cambios)
 # ======================================================================
 
-def export_history_csv(sensor_id: str = None, start_date: str = None, end_date: str = None) -> str:
+def export_history_csv(sensor_id: str = None, start_date: str = None, end_date: str = None, reportable_only: bool = False) -> str:
     try:
         if sensor_id:
             sensors = [sensor_id]
@@ -878,7 +929,7 @@ def export_history_csv(sensor_id: str = None, start_date: str = None, end_date: 
         csv_data = "Sensor ID,Fecha/Hora,Corriente (A),Potencia (W),Dispositivo,Estado\n"
         
         for sid in sensors:
-            history = get_history_data(sid, limit=1000, start_date=start_date, end_date=end_date)
+            history = get_history_data(sid, limit=1000, start_date=start_date, end_date=end_date, reportable_only=reportable_only)
             for record in history:
                 csv_data += f"{sid},{record['timestamp']},{record['irms']:.3f},{record['potencia']:.2f},{record['device']['type']},{record['estado']}\n"
         
@@ -896,7 +947,7 @@ def check_connection() -> bool:
         print(f"Error al verificar conexión: {str(e)}")
         return False
     
-def export_history_excel(sensor_id: str = None, start_date: str = None, end_date: str = None) -> bytes:
+def export_history_excel(sensor_id: str = None, start_date: str = None, end_date: str = None, reportable_only: bool = False) -> bytes:
     try:
         if sensor_id:
             sensors = [sensor_id]
@@ -930,7 +981,7 @@ def export_history_excel(sensor_id: str = None, start_date: str = None, end_date
 
         row_idx = 2
         for sid in sensors:
-            history = get_history_data(sid, limit=1000, start_date=start_date, end_date=end_date)
+            history = get_history_data(sid, limit=1000, start_date=start_date, end_date=end_date, reportable_only=reportable_only)
             for record in history:
                 row_data = [
                     sid,

@@ -609,22 +609,25 @@ async def read_current_data():
     result = await run_in_threadpool(get_current_data)
     return result
 
-@router.get("/history/{sensor_id}", dependencies=[Depends(require_roles(*REPORT_ROLES))])
+@router.get("/history/{sensor_id}")
 async def read_history_data(
-    sensor_id: str, 
+    sensor_id: str,
     limit: int = 20,
     start_date: str = None, # (HU-010)
-    end_date: str = None   # (HU-010)
+    end_date: str = None,   # (HU-010)
+    current_user: UserInDB = Depends(require_roles(*REPORT_ROLES)),
 ):
     """
     Endpoint para obtener el historial con filtros de fecha (HU-010)
     (Protegido por autenticación)
     """
-    history = get_history_data(sensor_id, limit, start_date, end_date)
+    reportable_only = current_user.role == AUDITOR_ROLE
+    history = await run_in_threadpool(get_history_data, sensor_id, limit, start_date, end_date, reportable_only=reportable_only)
     return {
         "sensor_id": sensor_id,
         "data": history,
-        "count": len(history)
+        "count": len(history),
+        "scope": "executive" if reportable_only else "full",
     }
 
 # ======================================================================
@@ -639,7 +642,7 @@ async def read_alert_history(
     Endpoint para obtener SÓLO el historial de alertas (sobrecargas)
     (Protegido por autenticación)
     """
-    alerts = get_alert_history(start_date, end_date)
+    alerts = await run_in_threadpool(get_alert_history, start_date, end_date)
     return {
         "data": alerts,
         "count": len(alerts)
@@ -783,17 +786,19 @@ async def update_threshold(sensor_id: str, threshold: ThresholdUpdate):
 # ENDPOINTS DE EXPORTACIÓN (CSV y NUEVO EXCEL)
 # ======================================================================
 
-@router.get("/export/csv", dependencies=[Depends(require_roles(*REPORT_ROLES))])
+@router.get("/export/csv")
 async def export_csv(
     sensor_id: str = None,
     start_date: str = None,
-    end_date: str = None
+    end_date: str = None,
+    current_user: UserInDB = Depends(require_roles(*REPORT_ROLES)),
 ):
     """
     Exportar datos históricos en formato CSV (HU-011)
     (Protegido por autenticación)
     """
-    csv_content = export_history_csv(sensor_id, start_date, end_date)
+    reportable_only = current_user.role == AUDITOR_ROLE
+    csv_content = await run_in_threadpool(export_history_csv, sensor_id, start_date, end_date, reportable_only=reportable_only)
     
     if not csv_content:
         raise HTTPException(status_code=404, detail="No hay datos para exportar")
@@ -808,17 +813,19 @@ async def export_csv(
         }
     )
 
-@router.get("/export/excel", dependencies=[Depends(require_roles(*REPORT_ROLES))])
+@router.get("/export/excel")
 async def export_excel(
     sensor_id: str = None,
     start_date: str = None,
-    end_date: str = None
+    end_date: str = None,
+    current_user: UserInDB = Depends(require_roles(*REPORT_ROLES)),
 ):
     """
     NUEVO: Exportar datos históricos en formato Excel con estilos (HU-011)
     (Protegido por autenticación)
     """
-    excel_content_bytes = export_history_excel(sensor_id, start_date, end_date)
+    reportable_only = current_user.role == AUDITOR_ROLE
+    excel_content_bytes = await run_in_threadpool(export_history_excel, sensor_id, start_date, end_date, reportable_only=reportable_only)
     
     if not excel_content_bytes:
         raise HTTPException(status_code=404, detail="No hay datos para exportar")

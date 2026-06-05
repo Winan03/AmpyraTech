@@ -78,7 +78,32 @@ class TestHistorialBasico:
         data = response.json()
         assert data["count"] == 0
         assert len(data["data"]) == 0
-        print("✅ Prueba completada: test_historial_vacio")
+
+    @patch('app.routers.data_api.get_history_data')
+    def test_direccion_consulta_historial_ejecutivo(self, mock_get, test_client, headers_auditor):
+        mock_get.return_value = []
+
+        response = test_client.get(
+            "/api/data/history/C-01",
+            headers=headers_auditor,
+        )
+
+        assert response.status_code == 200
+        assert response.json()["scope"] == "executive"
+        assert mock_get.call_args.kwargs["reportable_only"] is True
+
+    @patch('app.routers.data_api.get_history_data')
+    def test_admin_consulta_historial_completo(self, mock_get, test_client, headers_autenticados):
+        mock_get.return_value = []
+
+        response = test_client.get(
+            "/api/data/history/C-01",
+            headers=headers_autenticados,
+        )
+
+        assert response.status_code == 200
+        assert response.json()["scope"] == "full"
+        assert mock_get.call_args.kwargs["reportable_only"] is False
 
 
 @pytest.mark.unitaria

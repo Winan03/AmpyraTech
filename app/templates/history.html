@@ -717,6 +717,13 @@
         const exportExcelBtn = document.getElementById('export-excel-btn');
         const tableBody = document.getElementById('history-table-body');
 
+        function applyRoleContext() {
+            if (!currentUser || currentUser.role !== 'auditor') return;
+            const tableTitle = document.querySelector('.table-title');
+            if (tableTitle) tableTitle.textContent = 'Reportes Ejecutivos de Incidentes';
+            if (filterBtn) filterBtn.textContent = 'Filtrar Reportes';
+        }
+
         function populateSensorSelect() {
             if (!sensorSelect) return;
             sensorSelect.innerHTML = '<option value="">Todos los ramales</option>';
@@ -871,8 +878,8 @@
             let url = `/api/data/export/${format}?`;
             const params = new URLSearchParams();
             if (sensorId) params.append('sensor_id', sensorId);
-            if (startDate) params.append('start_date', encodeURIComponent(startDate));
-            if (endDate) params.append('end_date', encodeURIComponent(endDate));
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
             url += params.toString();
             
             try {
@@ -916,6 +923,7 @@
             if (!currentUser) return;
 
             loadTheme();
+            applyRoleContext();
             populateSensorSelect();
             
             filterBtn.addEventListener('click', fetchHistory);
