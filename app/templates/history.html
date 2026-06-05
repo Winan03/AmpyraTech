@@ -717,13 +717,6 @@
         const exportExcelBtn = document.getElementById('export-excel-btn');
         const tableBody = document.getElementById('history-table-body');
 
-        function applyRoleContext() {
-            if (!currentUser || currentUser.role !== 'auditor') return;
-            const tableTitle = document.querySelector('.table-title');
-            if (tableTitle) tableTitle.textContent = 'Reportes Ejecutivos de Incidentes';
-            if (filterBtn) filterBtn.textContent = 'Filtrar Reportes';
-        }
-
         function populateSensorSelect() {
             if (!sensorSelect) return;
             sensorSelect.innerHTML = '<option value="">Todos los ramales</option>';
@@ -923,7 +916,6 @@
             if (!currentUser) return;
 
             loadTheme();
-            applyRoleContext();
             populateSensorSelect();
             
             filterBtn.addEventListener('click', fetchHistory);

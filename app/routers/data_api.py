@@ -609,25 +609,22 @@ async def read_current_data():
     result = await run_in_threadpool(get_current_data)
     return result
 
-@router.get("/history/{sensor_id}")
+@router.get("/history/{sensor_id}", dependencies=[Depends(require_roles(*REPORT_ROLES))])
 async def read_history_data(
     sensor_id: str,
     limit: int = 20,
     start_date: str = None, # (HU-010)
-    end_date: str = None,   # (HU-010)
-    current_user: UserInDB = Depends(require_roles(*REPORT_ROLES)),
+    end_date: str = None   # (HU-010)
 ):
     """
     Endpoint para obtener el historial con filtros de fecha (HU-010)
     (Protegido por autenticación)
     """
-    reportable_only = current_user.role == AUDITOR_ROLE
-    history = await run_in_threadpool(get_history_data, sensor_id, limit, start_date, end_date, reportable_only=reportable_only)
+    history = await run_in_threadpool(get_history_data, sensor_id, limit, start_date, end_date)
     return {
         "sensor_id": sensor_id,
         "data": history,
-        "count": len(history),
-        "scope": "executive" if reportable_only else "full",
+        "count": len(history)
     }
 
 # ======================================================================
@@ -786,19 +783,17 @@ async def update_threshold(sensor_id: str, threshold: ThresholdUpdate):
 # ENDPOINTS DE EXPORTACIÓN (CSV y NUEVO EXCEL)
 # ======================================================================
 
-@router.get("/export/csv")
+@router.get("/export/csv", dependencies=[Depends(require_roles(*REPORT_ROLES))])
 async def export_csv(
     sensor_id: str = None,
     start_date: str = None,
-    end_date: str = None,
-    current_user: UserInDB = Depends(require_roles(*REPORT_ROLES)),
+    end_date: str = None
 ):
     """
     Exportar datos históricos en formato CSV (HU-011)
     (Protegido por autenticación)
     """
-    reportable_only = current_user.role == AUDITOR_ROLE
-    csv_content = await run_in_threadpool(export_history_csv, sensor_id, start_date, end_date, reportable_only=reportable_only)
+    csv_content = await run_in_threadpool(export_history_csv, sensor_id, start_date, end_date)
     
     if not csv_content:
         raise HTTPException(status_code=404, detail="No hay datos para exportar")
@@ -813,19 +808,17 @@ async def export_csv(
         }
     )
 
-@router.get("/export/excel")
+@router.get("/export/excel", dependencies=[Depends(require_roles(*REPORT_ROLES))])
 async def export_excel(
     sensor_id: str = None,
     start_date: str = None,
-    end_date: str = None,
-    current_user: UserInDB = Depends(require_roles(*REPORT_ROLES)),
+    end_date: str = None
 ):
     """
     NUEVO: Exportar datos históricos en formato Excel con estilos (HU-011)
     (Protegido por autenticación)
     """
-    reportable_only = current_user.role == AUDITOR_ROLE
-    excel_content_bytes = await run_in_threadpool(export_history_excel, sensor_id, start_date, end_date, reportable_only=reportable_only)
+    excel_content_bytes = await run_in_threadpool(export_history_excel, sensor_id, start_date, end_date)
     
     if not excel_content_bytes:
         raise HTTPException(status_code=404, detail="No hay datos para exportar")

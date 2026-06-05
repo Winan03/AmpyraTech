@@ -80,7 +80,7 @@ class TestHistorialBasico:
         assert len(data["data"]) == 0
 
     @patch('app.routers.data_api.get_history_data')
-    def test_direccion_consulta_historial_ejecutivo(self, mock_get, test_client, headers_auditor):
+    def test_direccion_consulta_historial_completo(self, mock_get, test_client, headers_auditor):
         mock_get.return_value = []
 
         response = test_client.get(
@@ -89,8 +89,8 @@ class TestHistorialBasico:
         )
 
         assert response.status_code == 200
-        assert response.json()["scope"] == "executive"
-        assert mock_get.call_args.kwargs["reportable_only"] is True
+        assert "scope" not in response.json()
+        mock_get.assert_called_once_with("C-01", 20, None, None)
 
     @patch('app.routers.data_api.get_history_data')
     def test_admin_consulta_historial_completo(self, mock_get, test_client, headers_autenticados):
@@ -102,8 +102,8 @@ class TestHistorialBasico:
         )
 
         assert response.status_code == 200
-        assert response.json()["scope"] == "full"
-        assert mock_get.call_args.kwargs["reportable_only"] is False
+        assert "scope" not in response.json()
+        mock_get.assert_called_once_with("C-01", 20, None, None)
 
 
 @pytest.mark.unitaria

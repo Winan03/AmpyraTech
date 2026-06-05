@@ -45,7 +45,7 @@ class TestFirebaseHistoryFilters:
         assert alerts[0]["sensor_id"] == "C-01"
         assert alerts[0]["timestamp_utc"] == "2026-06-05T04:23:23Z"
 
-    def test_historial_ejecutivo_omite_registros_normales(self, reset_firebase_mock):
+    def test_filtro_reportable_opcional_omite_registros_normales(self, reset_firebase_mock):
         records = {
             "-normal": {
                 "timestamp": "2026-06-04T23:30:00-05:00",
