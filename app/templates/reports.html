@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafyraShield - Reportes Ejecutivos</title>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0a0e27; --bg-secondary: #151932; --bg-tertiary: #1e2343;
+            --bg-card: linear-gradient(145deg, #151932 0%, #1e2343 100%);
+            --text-primary: #ffffff; --text-secondary: #a8b2d1; --text-muted: #6b7785;
+            --accent-primary: #00f5ff; --accent-secondary: #ff006e; --accent-success: #00ff88;
+            --accent-warning: #ffd60a; --accent-danger: #ff0055;
+            --shadow-glow: 0 8px 32px rgba(0, 245, 255, 0.15); --shadow-intense: 0 0 40px rgba(0, 245, 255, 0.4);
+            --border-color: rgba(255, 255, 255, 0.1); --border-glow: rgba(0, 245, 255, 0.5);
+        }
+        [data-theme="light"] {
+            --bg-primary: #f5f7fa; --bg-secondary: #ffffff; --bg-tertiary: #e8ecf1;
+            --bg-card: linear-gradient(145deg, #ffffff 0%, #f5f7fa 100%);
+            --text-primary: #1a1c23; --text-secondary: #4a5568; --text-muted: #718096;
+            --accent-primary: #0066cc; --accent-secondary: #d63384; --accent-success: #10b981;
+            --accent-warning: #f59e0b; --accent-danger: #ef4444;
+            --shadow-glow: 0 8px 32px rgba(0, 0, 0, 0.1); --shadow-intense: 0 0 40px rgba(0, 102, 204, 0.2);
+            --border-color: rgba(0, 0, 0, 0.1); --border-glow: rgba(0, 102, 204, 0.3);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary); min-height: 100vh;
+            color: var(--text-primary); transition: background 0.3s ease, color 0.3s ease;
+        }
+        [hidden] { display: none !important; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .header {
+            background: var(--bg-card); border-radius: 24px; padding: 30px 40px;
+            margin-bottom: 30px; box-shadow: var(--shadow-glow); border: 1px solid var(--border-color);
+        }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .logo-text h1 {
+            font-size: 2.5em; font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 5px;
+        }
+        .logo-text p { color: var(--text-secondary); font-size: 0.95em; font-weight: 500; }
+        .header-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .nav-btn {
+            background: var(--bg-tertiary); border: 2px solid var(--border-color); border-radius: 50px;
+            padding: 12px 24px; cursor: pointer; font-weight: 600; color: var(--text-primary);
+            text-decoration: none; font-size: 0.95em; transition: all 0.3s;
+        }
+        .nav-btn:hover { border-color: var(--border-glow); box-shadow: var(--shadow-intense); transform: translateY(-2px); }
+        .role-chip { cursor: default; border-color: var(--border-glow); color: var(--accent-primary); }
+        .btn-force {
+            background: #0d2440; color: #fff; border: none;
+            padding: 12px 22px; border-radius: 12px; cursor: pointer;
+            font-weight: 700; font-size: 0.92em; transition: opacity .2s;
+        }
+        .btn-force:hover { opacity: 0.85; }
+
+        /* App Shell overrides */
+        .workspace { min-width: 0; padding: 28px 32px 42px; }
+        .workspace .container { max-width: 1320px; }
+        .header { min-height: auto; padding: 22px 28px; margin-bottom: 20px; border-radius: 22px; background: rgba(255,255,255,.82); box-shadow: 0 18px 42px rgba(31,48,68,.08); }
+        body[data-theme="dark"] .header { background: rgba(18,28,48,.88); }
+        .header::before, body::before { display: none; }
+        .logo-text h1 { font-size: clamp(1.9rem, 2.6vw, 2.45rem); color: #175db6; background: none; -webkit-text-fill-color: initial; text-shadow: none; }
+        body[data-theme="dark"] .logo-text h1 { color: var(--accent-primary); }
+        .nav-btn { min-height: 42px; border-radius: 12px; border: 1px solid rgba(31,48,68,.14); background: rgba(255,255,255,.74); box-shadow: 0 8px 22px rgba(31,48,68,.08); }
+        .role-chip { background: #0d2440 !important; color: #fff !important; border-color: #0d2440 !important; box-shadow: 0 12px 24px rgba(13,36,64,.18) !important; gap: 8px; }
+        .role-chip::before { content: "Rol"; color: #9ac7ff; font-size: .72rem; font-weight: 800; text-transform: uppercase; margin-right: 6px; }
+
+        /* Grid de Reportes */
+        .section-title { font-size: 1.3em; font-weight: 800; color: #175db6; margin-bottom: 20px; }
+        body[data-theme="dark"] .section-title { color: var(--accent-primary); }
+        .reports-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .report-card {
+            background: rgba(255,255,255,.84); border: 1px solid rgba(31,48,68,.14);
+            border-radius: 18px; box-shadow: 0 18px 42px rgba(31,48,68,.08);
+            padding: 24px; display: flex; flex-direction: column; gap: 14px;
+            position: relative; overflow: hidden; transition: transform .25s, box-shadow .25s;
+        }
+        .report-card:hover { transform: translateY(-4px); box-shadow: 0 24px 56px rgba(31,48,68,.14); }
+        body[data-theme="dark"] .report-card { background: rgba(18,28,48,.82); border-color: rgba(255,255,255,.10); }
+        .report-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: linear-gradient(180deg, #175db6, #6c3aed);
+        }
+        body[data-theme="dark"] .report-card::before { background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary)); }
+        .report-title { font-size: 1.15em; font-weight: 800; color: #175db6; }
+        body[data-theme="dark"] .report-title { color: var(--accent-primary); }
+        .report-date { font-size: 0.85em; color: var(--text-secondary); }
+        .report-stats { display: flex; gap: 20px; padding: 12px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-label { font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 3px; }
+        .stat-val { font-size: 1.25em; font-weight: 800; color: #d97706; }
+        .stat-val.danger { color: #dc2626; }
+        .btn-download {
+            display: block; background: #f5f7fa; border: 2px solid #175db6; color: #175db6;
+            padding: 10px; border-radius: 10px; text-align: center; font-weight: 700;
+            font-size: 0.9em; cursor: pointer; transition: background .2s, color .2s;
+            text-decoration: none;
+        }
+        .btn-download:hover { background: #175db6; color: #fff; }
+        body[data-theme="dark"] .btn-download { background: rgba(255,255,255,.06); border-color: var(--accent-primary); color: var(--accent-primary); }
+        body[data-theme="dark"] .btn-download:hover { background: var(--accent-primary); color: #000; }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .section-title { font-size: 1.1em; font-weight: 800; color: #175db6; margin: 0; }
+        body[data-theme="dark"] .section-title { color: var(--accent-primary); }
+        .btn-generar {
+            background: #0d2440; color: #fff; border: none;
+            padding: 9px 20px; border-radius: 10px; cursor: pointer;
+            font-weight: 700; font-size: 0.88em; transition: opacity .2s;
+        }
+        .btn-generar:hover { opacity: 0.85; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 10000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-box {
+            background: #fff; color: #1a1c23; border-radius: 22px;
+            width: 90%; max-width: 480px; padding: 32px;
+            box-shadow: 0 24px 64px rgba(0,0,0,.22);
+        }
+        body[data-theme="dark"] .modal-box { background: #151932; color: #fff; }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .modal-head h3 { font-size: 1.2em; font-weight: 800; color: #175db6; }
+        body[data-theme="dark"] .modal-head h3 { color: var(--accent-primary); }
+        .modal-close { background: none; border: none; font-size: 1.6em; cursor: pointer; line-height: 1; color: var(--text-secondary); }
+        .modal-desc { font-size: 0.9em; color: var(--text-secondary); margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.88em; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-group select {
+            width: 100%; padding: 10px 14px; border-radius: 10px;
+            border: 1.5px solid rgba(31,48,68,.18); background: #f5f7fa;
+            color: #1a1c23; font-family: inherit; font-size: 0.95em;
+        }
+        body[data-theme="dark"] .form-group select { background: #1e2343; color: #fff; border-color: rgba(255,255,255,.15); }
+        .date-preview {
+            background: #f0f4f8; border: 1px solid rgba(31,48,68,.12);
+            border-radius: 10px; padding: 14px; margin-bottom: 20px;
+        }
+        body[data-theme="dark"] .date-preview { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.12); }
+        .date-preview p { font-size: 0.88em; color: var(--text-secondary); margin-bottom: 4px; }
+        .date-preview strong { font-size: 1em; color: #175db6; }
+        body[data-theme="dark"] .date-preview strong { color: var(--accent-primary); }
+        .btn-primary {
+            width: 100%; padding: 13px; border-radius: 12px; border: none;
+            background: #0d2440; color: #fff; font-weight: 700; font-size: 1em; cursor: pointer; transition: opacity .2s;
+        }
+        .btn-primary:hover { opacity: 0.85; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            .header { padding: 20px; }
+            .logo-text h1 { font-size: 1.8em; }
+            .reports-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260602-2">
+</head>
+<body data-theme="light">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <img class="sidebar-logo-img" src="/static/img/safyrashield-logo.png" alt="SafyraShield IoT" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
+                <span class="sidebar-logo-fallback" hidden>S</span>
+                <div>
+                    <strong>SafyraShield IoT</strong>
+                    <span>Monitoreo inteligente</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" aria-label="Navegación principal">
+                <div class="sidebar-section-label">Navegación</div>
+                <a class="sidebar-link" href="/" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">DB</span>
+                    <span class="sidebar-copy">
+                        <strong>Dashboard</strong>
+                        <small>Lectura por sal&oacute;n</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/alerts" data-roles="admin">
+                    <span class="sidebar-icon" aria-hidden="true">AL</span>
+                    <span class="sidebar-copy">
+                        <strong>Alertas</strong>
+                        <small>Eventos cr&iacute;ticos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/history" data-roles="admin">
+                    <span class="sidebar-icon" aria-hidden="true">HI</span>
+                    <span class="sidebar-copy">
+                        <strong>Historial</strong>
+                        <small>Registros el&eacute;ctricos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/tickets" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">TI</span>
+                    <span class="sidebar-copy">
+                        <strong>Tickets</strong>
+                        <small>Mantenimiento</small>
+                    </span>
+                </a>
+                <a class="sidebar-link active" href="/reports" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">RE</span>
+                    <span class="sidebar-copy">
+                        <strong>Reportes</strong>
+                        <small>Resumen ejecutivo</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/schedule" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">AG</span>
+                    <span class="sidebar-copy">
+                        <strong>Agenda</strong>
+                        <small>Horarios del laboratorio</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/users" data-roles="admin">
+                    <span class="sidebar-icon" aria-hidden="true">US</span>
+                    <span class="sidebar-copy">
+                        <strong>Usuarios</strong>
+                        <small>Roles y estados</small>
+                    </span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-session">
+                    <span class="sidebar-user-icon" aria-hidden="true">US</span>
+                    <span class="sidebar-user-copy">
+                        <strong data-user-label>Validando usuario...</strong>
+                        <small data-role-badge>Validando rol...</small>
+                    </span>
+                </div>
+                <button class="sidebar-action logout" type="button" onclick="SafyraAuth.logout()">Cerrar sesi&oacute;n</button>
+            </div>
+        </aside>
+
+        <main class="workspace">
+            <div class="container">
+                <header class="header">
+                    <div class="header-content">
+                        <div class="logo-section">
+                            <div class="logo-text">
+                                <h1>Reportes Ejecutivos</h1>
+                                <p>Informes en PDF con consumos eléctricos y alertas del laboratorio</p>
+                            </div>
+                        </div>
+                        <div class="header-controls">
+                            <button class="nav-btn" onclick="toggleTheme()">
+                                <span id="theme-text">Modo Oscuro</span>
+                            </button>
+                            <span class="nav-btn role-chip" data-role-badge>Cargando...</span>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="section-header">
+                    <p class="section-title">Reportes Generados</p>
+                    <button class="btn-generar admin-only" data-roles="admin" onclick="openReportModal()">Generar Reporte</button>
+                </div>
+                <div class="reports-grid" id="reports-grid">
+                    <p style="color:var(--text-muted); padding: 20px 0;">Cargando reportes...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Reporte Manual -->
+    <div class="modal" id="report-modal">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3>Generar Reporte Manual</h3>
+                <button class="modal-close" onclick="closeReportModal()">&times;</button>
+            </div>
+            <p class="modal-desc">Selecciona el periodo. El PDF incluirá todos los datos desde la fecha de inicio hasta hoy.</p>
+            <div class="form-group">
+                <label>Tipo de Reporte</label>
+                <select id="modal-report-type" onchange="updateReportDates()">
+                    <option value="7">Reporte Semanal — Últimos 7 días</option>
+                    <option value="30">Reporte Mensual — Últimos 30 días</option>
+                </select>
+            </div>
+            <div class="date-preview">
+                <p>El reporte incluirá datos del periodo:</p>
+                <strong id="modal-report-dates">Calculando fechas...</strong>
+            </div>
+            <button class="btn-primary" id="btn-generate-report" onclick="confirmGenerateReport()">
+                Generar y Descargar PDF
+            </button>
+        </div>
+    </div>
+
+    <script src="/static/js/rbac.js"></script>
+    <script>
+        const AUTH_HEADER = SafyraAuth.getAuthHeader();
+
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            document.getElementById('theme-text').textContent = isDark ? 'Modo Oscuro' : 'Modo Claro';
+        }
+
+        async function fetchReports() {
+            try {
+                const res = await fetch('/api/reports/', { headers: AUTH_HEADER });
+                const data = await res.json();
+                const grid = document.getElementById('reports-grid');
+                grid.innerHTML = '';
+
+                if (!data.data || data.data.length === 0) {
+                    grid.innerHTML = '<p style="color:var(--text-muted); padding:20px 0;">No hay reportes disponibles. Los reportes se generan automáticamente cada viernes o puedes forzar uno manualmente.</p>';
+                    return;
+                }
+
+                data.data.forEach(report => {
+                    const startStr = new Date(report.period_start).toLocaleDateString('es-PE');
+                    const endStr = new Date(report.period_end).toLocaleDateString('es-PE');
+                    const genStr = new Date(report.generated_at).toLocaleString('es-PE');
+                    const peak = typeof report.peak_current === 'number' ? report.peak_current.toFixed(1) : '0.0';
+
+                    const card = document.createElement('div');
+                    card.className = 'report-card';
+                    card.innerHTML = `
+                        <div class="report-title">${report.report_code}</div>
+                        <div class="report-date">Período: ${startStr} al ${endStr}</div>
+                        <div class="report-date" style="margin-top:-8px; font-size:0.8em;">Generado el ${genStr}</div>
+                        <div class="report-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Alertas</span>
+                                <span class="stat-val">${report.total_alerts}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Tickets</span>
+                                <span class="stat-val">${report.total_tickets}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Pico Máx</span>
+                                <span class="stat-val danger">${peak}A</span>
+                            </div>
+                        </div>
+                        <button class="btn-download" onclick="window.open('/api/reports/${report.id}/download','_blank')">
+                            📄 Descargar PDF
+                        </button>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                SafyraAuth.applyRoleUI(currentUser);
+            } catch (err) {
+                console.error('Error cargando reportes:', err);
+                document.getElementById('reports-grid').innerHTML =
+                    '<p style="color:#ef4444; padding:20px 0;">Error al cargar reportes. Intenta recargar la página.</p>';
+            }
+        }
+
+        function openReportModal() {
+            document.getElementById('report-modal').classList.add('active');
+            updateReportDates();
+        }
+
+        function closeReportModal() {
+            document.getElementById('report-modal').classList.remove('active');
+        }
+
+        function updateReportDates() {
+            const days = parseInt(document.getElementById('modal-report-type').value);
+            const end = new Date();
+            const start = new Date();
+            start.setDate(end.getDate() - days);
+            const fmt = d => d.toISOString().split('T')[0];
+            document.getElementById('modal-report-dates').textContent = `${fmt(start)} al ${fmt(end)}`;
+        }
+
+        async function confirmGenerateReport() {
+            const btn = document.getElementById('btn-generate-report');
+            const days = document.getElementById('modal-report-type').value;
+            btn.disabled = true;
+            btn.textContent = 'Generando PDF...';
+            try {
+                const res = await fetch(`/api/reports/generate?days=${days}`, { method: 'POST', headers: AUTH_HEADER });
+                if (res.ok) {
+                    alert('✅ Reporte generado exitosamente');
+                    closeReportModal();
+                    fetchReports();
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    alert('Error generando reporte: ' + (err.detail || 'Error desconocido'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error de conexión al generar el reporte');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generar y Descargar PDF';
+            }
+        }
+
+        let currentUser = null;
+        document.addEventListener('DOMContentLoaded', async () => {
+            currentUser = await SafyraAuth.requireRoles(['admin', 'auditor']);
+            if (currentUser) fetchReports();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafyraShield - Tickets de Mantenimiento</title>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0a0e27; --bg-secondary: #151932; --bg-tertiary: #1e2343;
+            --bg-card: linear-gradient(145deg, #151932 0%, #1e2343 100%);
+            --text-primary: #ffffff; --text-secondary: #a8b2d1; --text-muted: #6b7785;
+            --accent-primary: #00f5ff; --accent-secondary: #ff006e; --accent-success: #00ff88;
+            --accent-warning: #ffd60a; --accent-danger: #ff0055;
+            --shadow-glow: 0 8px 32px rgba(0, 245, 255, 0.15); --shadow-intense: 0 0 40px rgba(0, 245, 255, 0.4);
+            --border-color: rgba(255, 255, 255, 0.1); --border-glow: rgba(0, 245, 255, 0.5);
+        }
+        [data-theme="light"] {
+            --bg-primary: #f5f7fa; --bg-secondary: #ffffff; --bg-tertiary: #e8ecf1;
+            --bg-card: linear-gradient(145deg, #ffffff 0%, #f5f7fa 100%);
+            --text-primary: #1a1c23; --text-secondary: #4a5568; --text-muted: #718096;
+            --accent-primary: #0066cc; --accent-secondary: #d63384; --accent-success: #10b981;
+            --accent-warning: #f59e0b; --accent-danger: #ef4444;
+            --shadow-glow: 0 8px 32px rgba(0, 0, 0, 0.1); --shadow-intense: 0 0 40px rgba(0, 102, 204, 0.2);
+            --border-color: rgba(0, 0, 0, 0.1); --border-glow: rgba(0, 102, 204, 0.3);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary); min-height: 100vh;
+            color: var(--text-primary); transition: background 0.3s ease, color 0.3s ease;
+        }
+        [hidden] { display: none !important; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .header {
+            background: var(--bg-card); border-radius: 24px; padding: 30px 40px;
+            margin-bottom: 30px; box-shadow: var(--shadow-glow); border: 1px solid var(--border-color);
+        }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .logo-text h1 {
+            font-size: 2.5em; font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 5px;
+        }
+        .logo-text p { color: var(--text-secondary); font-size: 0.95em; font-weight: 500; }
+        .header-controls { display: flex; align-items: center; gap: 15px; }
+        .nav-btn {
+            background: var(--bg-tertiary); border: 2px solid var(--border-color); border-radius: 50px;
+            padding: 12px 24px; cursor: pointer; font-weight: 600; color: var(--text-primary);
+            text-decoration: none; font-size: 0.95em; transition: all 0.3s;
+        }
+        .nav-btn:hover { border-color: var(--border-glow); box-shadow: var(--shadow-intense); transform: translateY(-2px); }
+        .role-chip { cursor: default; border-color: var(--border-glow); color: var(--accent-primary); }
+
+        /* App Shell overrides (matching alerts.html) */
+        .workspace { min-width: 0; padding: 28px 32px 42px; }
+        .workspace .container { max-width: 1320px; }
+        .header { min-height: auto; padding: 22px 28px; margin-bottom: 20px; border-radius: 22px; background: rgba(255,255,255,.82); box-shadow: 0 18px 42px rgba(31,48,68,.08); }
+        body[data-theme="dark"] .header { background: rgba(18,28,48,.88); }
+        .header::before, body::before { display: none; }
+        .logo-text h1 { font-size: clamp(1.9rem, 2.6vw, 2.45rem); color: #175db6; background: none; -webkit-text-fill-color: initial; text-shadow: none; }
+        body[data-theme="dark"] .logo-text h1 { color: var(--accent-primary); }
+        .nav-btn { min-height: 42px; border-radius: 12px; border: 1px solid rgba(31,48,68,.14); background: rgba(255,255,255,.74); box-shadow: 0 8px 22px rgba(31,48,68,.08); }
+        .role-chip { background: #0d2440 !important; color: #fff !important; border-color: #0d2440 !important; box-shadow: 0 12px 24px rgba(13,36,64,.18) !important; gap: 8px; }
+        .role-chip::before { content: "Rol"; color: #9ac7ff; font-size: .72rem; font-weight: 800; text-transform: uppercase; margin-right: 6px; }
+
+        /* Tabla de Tickets */
+        .table-section {
+            background: rgba(255,255,255,.84); border: 1px solid rgba(31,48,68,.14);
+            border-radius: 18px; box-shadow: 0 18px 42px rgba(31,48,68,.08);
+            padding: 28px; margin-bottom: 24px;
+        }
+        body[data-theme="dark"] .table-section { background: rgba(18,28,48,.82); border-color: rgba(255,255,255,.10); }
+        .table-title { font-size: 1.1em; font-weight: 800; color: #175db6; margin-bottom: 20px; }
+        body[data-theme="dark"] .table-title { color: var(--accent-primary); }
+        .table-wrapper { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.9em; }
+        th { font-weight: 700; font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); background: var(--bg-tertiary); }
+        tbody tr:hover { background: var(--bg-tertiary); }
+
+        /* Badges */
+        .status-badge { padding: 4px 12px; border-radius: 50px; font-weight: 700; font-size: 0.82em; display: inline-block; }
+        .status-open { background: rgba(239,68,68,.15); color: #dc2626; border: 1px solid rgba(239,68,68,.4); }
+        .status-progress { background: rgba(245,158,11,.15); color: #d97706; border: 1px solid rgba(245,158,11,.4); }
+        .status-closed { background: rgba(16,185,129,.15); color: #059669; border: 1px solid rgba(16,185,129,.4); }
+        .priority-alta { color: #dc2626; font-weight: 700; }
+        .priority-media { color: #d97706; font-weight: 700; }
+        .priority-baja { color: #059669; font-weight: 700; }
+
+        /* Botón Gestionar */
+        .btn-manage {
+            background: #0d2440; color: #fff; border: none;
+            padding: 6px 16px; border-radius: 8px; cursor: pointer;
+            font-size: 0.85em; font-weight: 600; transition: opacity .2s;
+        }
+        .btn-manage:hover { opacity: 0.82; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 10000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-box {
+            background: #fff; color: #1a1c23;
+            border-radius: 22px; width: 90%; max-width: 480px;
+            padding: 32px; box-shadow: 0 24px 64px rgba(0,0,0,.22);
+        }
+        body[data-theme="dark"] .modal-box { background: #151932; color: #fff; }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+        .modal-head h3 { font-size: 1.2em; font-weight: 800; color: #175db6; }
+        body[data-theme="dark"] .modal-head h3 { color: var(--accent-primary); }
+        .modal-close { background: none; border: none; font-size: 1.6em; cursor: pointer; line-height: 1; color: var(--text-secondary); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.88em; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-group select, .form-group textarea {
+            width: 100%; padding: 10px 14px; border-radius: 10px;
+            border: 1.5px solid rgba(31,48,68,.18); background: #f5f7fa;
+            color: #1a1c23; font-family: inherit; font-size: 0.95em;
+        }
+        body[data-theme="dark"] .form-group select,
+        body[data-theme="dark"] .form-group textarea { background: #1e2343; color: #fff; border-color: rgba(255,255,255,.15); }
+        .form-group textarea { resize: vertical; min-height: 90px; }
+        .btn-primary {
+            width: 100%; padding: 13px; border-radius: 12px; border: none;
+            background: #0d2440; color: #fff; font-weight: 700; font-size: 1em; cursor: pointer; transition: opacity .2s;
+        }
+        .btn-primary:hover { opacity: 0.85; }
+
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            .header { padding: 20px; }
+            .logo-text h1 { font-size: 1.8em; }
+        }
+    </style>
+    <link rel="stylesheet" href="/static/css/app_shell.css?v=sidebar-20260602-2">
+</head>
+<body data-theme="light">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <img class="sidebar-logo-img" src="/static/img/safyrashield-logo.png" alt="SafyraShield IoT" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
+                <span class="sidebar-logo-fallback" hidden>S</span>
+                <div>
+                    <strong>SafyraShield IoT</strong>
+                    <span>Monitoreo inteligente</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav" aria-label="Navegación principal">
+                <div class="sidebar-section-label">Navegación</div>
+                <a class="sidebar-link" href="/" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">DB</span>
+                    <span class="sidebar-copy">
+                        <strong>Dashboard</strong>
+                        <small>Lectura por sal&oacute;n</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/alerts" data-roles="admin">
+                    <span class="sidebar-icon" aria-hidden="true">AL</span>
+                    <span class="sidebar-copy">
+                        <strong>Alertas</strong>
+                        <small>Eventos cr&iacute;ticos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/history" data-roles="admin">
+                    <span class="sidebar-icon" aria-hidden="true">HI</span>
+                    <span class="sidebar-copy">
+                        <strong>Historial</strong>
+                        <small>Registros el&eacute;ctricos</small>
+                    </span>
+                </a>
+                <a class="sidebar-link active" href="/tickets" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">TI</span>
+                    <span class="sidebar-copy">
+                        <strong>Tickets</strong>
+                        <small>Mantenimiento</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/reports" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">RE</span>
+                    <span class="sidebar-copy">
+                        <strong>Reportes</strong>
+                        <small>Resumen ejecutivo</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/schedule" data-roles="admin,auditor">
+                    <span class="sidebar-icon" aria-hidden="true">AG</span>
+                    <span class="sidebar-copy">
+                        <strong>Agenda</strong>
+                        <small>Horarios del laboratorio</small>
+                    </span>
+                </a>
+                <a class="sidebar-link" href="/users" data-roles="admin">
+                    <span class="sidebar-icon" aria-hidden="true">US</span>
+                    <span class="sidebar-copy">
+                        <strong>Usuarios</strong>
+                        <small>Roles y estados</small>
+                    </span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="sidebar-session">
+                    <span class="sidebar-user-icon" aria-hidden="true">US</span>
+                    <span class="sidebar-user-copy">
+                        <strong data-user-label>Validando usuario...</strong>
+                        <small data-role-badge>Validando rol...</small>
+                    </span>
+                </div>
+                <button class="sidebar-action logout" type="button" onclick="SafyraAuth.logout()">Cerrar sesi&oacute;n</button>
+            </div>
+        </aside>
+
+        <main class="workspace">
+            <div class="container">
+                <header class="header">
+                    <div class="header-content">
+                        <div class="logo-section">
+                            <div class="logo-text">
+                                <h1>Tickets de Mantenimiento</h1>
+                                <p>Gestión de incidentes detectados por el sistema de monitoreo</p>
+                            </div>
+                        </div>
+                        <div class="header-controls">
+                            <button class="nav-btn" onclick="toggleTheme()">
+                                <span id="theme-text">Modo Oscuro</span>
+                            </button>
+                            <span class="nav-btn role-chip" data-role-badge>Cargando...</span>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="table-section">
+                    <div class="table-title">Registro de Tickets</div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Ramal / Sensor</th>
+                                    <th>Incidente</th>
+                                    <th>Prioridad</th>
+                                    <th>Fecha Creado</th>
+                                    <th>Estado</th>
+                                    <th>Notas Técnicas</th>
+                                    <th class="admin-only" data-roles="admin">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tickets-table-body">
+                                <tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando tickets...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Gestionar Ticket -->
+    <div class="modal" id="ticket-modal">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3>Actualizar Ticket</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <input type="hidden" id="modal-ticket-id">
+            <div class="form-group">
+                <label>Estado</label>
+                <select id="modal-status">
+                    <option value="Abierto">Abierto (Pendiente)</option>
+                    <option value="En revisión">En Revisión</option>
+                    <option value="Cerrado">Cerrado (Resuelto)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Notas de Resolución (Opcional)</label>
+                <textarea id="modal-notes" placeholder="Ej: Se revisaron los equipos del ramal y se normalizó el consumo..."></textarea>
+            </div>
+            <button class="btn-primary" onclick="saveTicket()">Guardar Cambios</button>
+        </div>
+    </div>
+
+    <script src="/static/js/rbac.js"></script>
+    <script>
+        const AUTH_HEADER = SafyraAuth.getAuthHeader();
+
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            document.getElementById('theme-text').textContent = isDark ? 'Modo Oscuro' : 'Modo Claro';
+        }
+
+        function getStatusBadge(status) {
+            const s = (status || '').toLowerCase();
+            if (s === 'abierto' || s === 'open') return '<span class="status-badge status-open">Abierto</span>';
+            if (s === 'en revisi\u00f3n' || s === 'en revision' || s === 'en progreso' || s === 'in_progress') return '<span class="status-badge status-progress">En Revisi\u00f3n</span>';
+            if (s === 'cerrado' || s === 'resuelto' || s === 'closed') return '<span class="status-badge status-closed">Cerrado</span>';
+            return `<span class="status-badge">${status}</span>`;
+        }
+
+        async function fetchTickets() {
+            try {
+                const res = await fetch('/api/tickets/', { headers: AUTH_HEADER });
+                const data = await res.json();
+                const tbody = document.getElementById('tickets-table-body');
+                tbody.innerHTML = '';
+
+                if (!data.data || data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">No hay tickets registrados. Los tickets se generan automáticamente cuando se detecta una sobrecarga.</td></tr>';
+                    return;
+                }
+
+                data.data.forEach(ticket => {
+                    const date = ticket.created_at ? new Date(ticket.created_at).toLocaleString('es-PE') : '—';
+                    const notes = ticket.resolution_notes || '—';
+                    const ramal = (ticket.branch_label && ticket.branch_label !== '—') ? ticket.branch_label : (ticket.sensor_id || '—');
+                    
+                    const incidentTranslations = {
+                        'overload': 'Sobrecarga',
+                        'out_of_schedule_consumption': 'Consumo fuera de horario'
+                    };
+                    const rawIncidente = ticket.event_type || ticket.issue_type || '';
+                    const incidente = incidentTranslations[rawIncidente] || rawIncidente || '—';
+                    
+                    const priority = ticket.priority || '—';
+                    const priorityClass = priority === 'Alta' ? 'priority-alta' : (priority === 'Media' ? 'priority-media' : 'priority-baja');
+                    const safeNotes = (ticket.resolution_notes || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${ticket.ticket_code || '—'}</strong></td>
+                        <td>${ramal}</td>
+                        <td>${incidente}</td>
+                        <td><span class="${priorityClass}">${priority}</span></td>
+                        <td>${date}</td>
+                        <td>${getStatusBadge(ticket.status)}</td>
+                        <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${notes}">${notes}</td>
+                        <td class="admin-only" data-roles="admin">
+                            <button class="btn-manage" onclick="openModal('${ticket.id}','${ticket.status}','${safeNotes}')">Gestionar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                SafyraAuth.applyRoleUI(currentUser);
+            } catch (err) {
+                console.error('Error cargando tickets:', err);
+                document.getElementById('tickets-table-body').innerHTML =
+                    '<tr><td colspan="8" style="text-align:center; color:#ef4444; padding:20px;">Error al cargar tickets. Intenta recargar la página.</td></tr>';
+            }
+        }
+
+        function openModal(id, status, notes) {
+            document.getElementById('modal-ticket-id').value = id;
+            document.getElementById('modal-status').value = status;
+            document.getElementById('modal-notes').value = notes;
+            document.getElementById('ticket-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('ticket-modal').classList.remove('active');
+        }
+
+        async function saveTicket() {
+            const id = document.getElementById('modal-ticket-id').value;
+            const status = document.getElementById('modal-status').value;
+            const notes = document.getElementById('modal-notes').value;
+            try {
+                const res = await fetch(`/api/tickets/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', ...AUTH_HEADER },
+                    body: JSON.stringify({ status, resolution_notes: notes })
+                });
+                if (res.ok) { closeModal(); fetchTickets(); }
+                else { alert('Error al guardar el ticket'); }
+            } catch (err) {
+                console.error(err);
+                alert('Error de conexión');
+            }
+        }
+
+        let currentUser = null;
+        document.addEventListener('DOMContentLoaded', async () => {
+            currentUser = await SafyraAuth.requireRoles(['admin', 'auditor']);
+            if (currentUser) fetchTickets();
+        });
+    </script>
+</body>
+</html>

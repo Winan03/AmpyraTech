@@ -558,7 +558,8 @@ def _get_user_from_firebase_token(token: str) -> Optional[UserInDB]:
             token,
             check_revoked=CHECK_FIREBASE_TOKEN_REVOKED,
         )
-    except Exception:
+    except Exception as e:
+        print(f"🔥 FIREBASE AUTH EXCEPTION 🔥: {e}")
         return None
 
     uid = str(decoded_token.get("uid") or decoded_token.get("sub") or "").strip()

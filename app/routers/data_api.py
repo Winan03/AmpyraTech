@@ -1,5 +1,5 @@
 # app/routers/data_api.py
-from fastapi import APIRouter, HTTPException, Response, Depends, Header, status
+from fastapi import APIRouter, HTTPException, Response, Depends, Header, status, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
@@ -23,6 +23,7 @@ from app.routers.auth_api import require_roles
 from app.routers.auth_api import UserInDB
 from app.models.data import ThresholdUpdate
 from app.services.notifications import queue_alert_notification_factory, send_alert_notification
+from app.services.ticket_service import handle_critical_alert
 from collections.abc import Mapping
 from datetime import date, datetime, timezone
 from typing import Any
@@ -549,7 +550,7 @@ def _event_type_for_sensor(sensor: Mapping[str, Any]) -> str:
     return ""
 
 
-def _queue_sensor_alert(sensor: Mapping[str, Any]) -> dict[str, Any]:
+def _queue_sensor_alert(sensor: Mapping[str, Any], background_tasks: BackgroundTasks = None) -> dict[str, Any]:
     event_type = _event_type_for_sensor(sensor)
     if not event_type:
         return {"queued": False, "reason": "no_alert"}
@@ -562,16 +563,35 @@ def _queue_sensor_alert(sensor: Mapping[str, Any]) -> dict[str, Any]:
         return {"queued": False, "reason": "cooldown"}
 
     sensor_snapshot = dict(sensor)
+    
+    # Siempre crear ticket/audit_event en Supabase cuando hay una alerta real (independiente de notificación)
+    if background_tasks:
+        severity = "Alta" if event_type == "overload" else "Media"
+        background_tasks.add_task(
+            handle_critical_alert,
+            event_type=event_type,
+            sensor_id=sensor_snapshot.get("id", LAB_ROOM_ID),
+            severity=severity,
+            irms=sensor_snapshot.get("irms"),
+            power=sensor_snapshot.get("potencia"),
+            branch_label=sensor_snapshot.get("circuito", LAB_ROOM_NAME)
+        )
+
+    # La notificación (email/push) es un esfuerzo separado e independiente
     queue_result = queue_alert_notification_factory(
         lambda: _build_alert_notification_payload(sensor_snapshot, event_type)
     )
     if queue_result.get("queued"):
         _alert_notification_cache[cache_key] = current_timestamp
+    else:
+        # Marcar cooldown igual para evitar spam de tickets en lecturas consecutivas
+        _alert_notification_cache[cache_key] = current_timestamp
+        
     return {**queue_result, "event_type": event_type}
 
 
 @router.post("/iot/readings", status_code=status.HTTP_201_CREATED, dependencies=[Depends(_require_iot_token)])
-async def ingest_iot_reading(reading: IotReadingPayload):
+async def ingest_iot_reading(reading: IotReadingPayload, background_tasks: BackgroundTasks):
     sensor_id = reading.sensor_id.strip()
     if not IOT_SENSOR_ID_PATTERN.fullmatch(sensor_id):
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="sensor_id invalido")
@@ -590,7 +610,7 @@ async def ingest_iot_reading(reading: IotReadingPayload):
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error al registrar lectura IoT: {exc}") from exc
 
-    notification = _queue_sensor_alert(sensor)
+    notification = _queue_sensor_alert(sensor, background_tasks)
     return {
         "success": True,
         "sensor": sensor,
