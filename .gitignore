@@ -27,3 +27,6 @@ Safyra_Shield_Firebase.json
 # Integracion
 integrations/
 docs/
+
+# Firmware de microcontroladores (contiene credenciales WiFi reales)
+code_microcontroladores/
