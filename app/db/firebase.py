@@ -15,9 +15,14 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils import get_column_letter
 
+# Cargar .env solo si existe (en Docker/Coolify las variables vienen del entorno)
 if os.getenv("VERCEL") != "1":
-    print("Cargando variables de entorno desde .env (Modo Local)...")
-    load_dotenv(override=os.getenv("SKIP_FIREBASE_INIT", "false").lower() not in {"1", "true", "yes"})
+    env_path = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+    if os.path.exists(env_path):
+        print("Cargando variables de entorno desde .env (Modo Local)...")
+        load_dotenv(dotenv_path=env_path, override=os.getenv("SKIP_FIREBASE_INIT", "false").lower() not in {"1", "true", "yes"})
+    else:
+        print("Sin archivo .env (usando variables del entorno del sistema)...")
 else:
     print("Saltando load_dotenv() (Modo Vercel)...")
 
@@ -74,9 +79,9 @@ elif not firebase_admin._apps:
         print("Firebase initialized successfully")
         
     except Exception as e:
-        # Imprime un error más detallado si falla la decodificación o inicialización
-        print(f"ERROR FATAL AL INICIALIZAR FIREBASE: {str(e)}")
-        raise Exception(f"Failed to initialize Firebase: {str(e)}")
+        # No se relanza para evitar crashear el arranque del servidor.
+        # Las funciones que usen Firebase fallarán con un mensaje claro.
+        print(f"ERROR AL INICIALIZAR FIREBASE (el app continuará): {str(e)}")
 
 # ======================================================================
 # ¡FUNCIÓN DE DETECCIÓN MODIFICADA!
