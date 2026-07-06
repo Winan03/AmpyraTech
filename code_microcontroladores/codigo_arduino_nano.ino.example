@@ -1,0 +1,94 @@
+// --- Configuración del Filtro ---
+const int numLecturas = 10;
+float lecturas[numLecturas];
+int indiceEscritura = 0;
+float sumaTotal = 0;
+float promedioIrms = 0;
+
+// Variable para guardar el ID dinámico
+int idCircuito = 1;
+
+// --- Configuración del Filtro de Inactividad / Heartbeat ---
+const float UMBRAL_INACTIVO = 0.17;               // A - cubre rango fantasma medido (0.10-0.15A)
+const unsigned long INTERVALO_HEARTBEAT = 30000;  // ms entre envíos mientras está inactivo
+unsigned long ultimoEnvio = 0;
+
+void setup() {
+  Serial.begin(9600); // Velocidad UART hacia el ESP32
+  analogReference(INTERNAL);
+
+  // --- IDENTIFICADOR DINÁMICO ---
+  pinMode(2, INPUT_PULLUP);
+  pinMode(3, INPUT_PULLUP);
+
+  if (digitalRead(2) == LOW) {
+    idCircuito = 2; // Cable en D2 a GND
+  } else if (digitalRead(3) == LOW) {
+    idCircuito = 3; // Cable en D3 a GND
+  } else {
+    idCircuito = 1; // Sin cables (D2 y D3 libres)
+  }
+
+  for (int i = 0; i < numLecturas; i++) {
+    lecturas[i] = 0;
+  }
+
+  ultimoEnvio = millis();
+}
+
+void loop() {
+  // 1. SIEMPRE MIDE - esto nunca se detiene, sin importar el estado
+  float nuevaLectura = get_corriente();
+  sumaTotal = sumaTotal - lecturas[indiceEscritura];
+  lecturas[indiceEscritura] = nuevaLectura;
+  sumaTotal = sumaTotal + lecturas[indiceEscritura];
+  indiceEscritura = (indiceEscritura + 1);
+
+  if (indiceEscritura >= numLecturas) {
+    indiceEscritura = 0;
+  }
+  promedioIrms = sumaTotal / numLecturas;
+  float P = promedioIrms * 220.0;
+
+  // 2. DECIDE SI ENVÍA POR UART
+  bool estaActivo = (promedioIrms >= UMBRAL_INACTIVO);
+  unsigned long ahora = millis();
+
+  if (estaActivo) {
+    // Hay carga real -> envía YA, sin esperar nada
+    enviarTrama(P);
+    ultimoEnvio = ahora;
+  } else if (ahora - ultimoEnvio >= INTERVALO_HEARTBEAT) {
+    // Inactivo, pero ya pasaron 30s -> heartbeat con el dato real
+    enviarTrama(P);
+    ultimoEnvio = ahora;
+  }
+}
+
+void enviarTrama(float P) {
+  Serial.print("C-0");
+  Serial.print(idCircuito);
+  Serial.print(",");
+  Serial.print(promedioIrms, 3);
+  Serial.print(",");
+  Serial.println(P, 3);
+}
+
+float get_corriente() {
+  float voltajeSensor;
+  float corriente = 0;
+  float Sumatoria = 0;
+  long tiempo = millis();
+  int N = 0;
+
+  while (millis() - tiempo < 600) {
+    voltajeSensor = analogRead(A0) * (1.1 / 1023.0);
+    corriente = voltajeSensor * 32.06;
+    Sumatoria = Sumatoria + sq(corriente);
+    N = N + 1;
+  }
+
+  Sumatoria = Sumatoria * 2;
+  corriente = sqrt(Sumatoria / N);
+  return (corriente);
+}

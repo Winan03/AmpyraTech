@@ -1,0 +1,99 @@
+// ==========================================================
+// SAFYRASHIELD - FIRMWARE ESP32 (EJEMPLO)
+// Copiar a Codigo_esp_32.ino y reemplazar valores reales
+// ==========================================================
+
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+// ==========================================================
+// CONFIGURACIÓN - REEMPLAZAR CON VALORES REALES
+// ==========================================================
+
+// Credenciales WiFi
+#define WIFI_SSID "TU_RED_WIFI"
+#define WIFI_PASSWORD "TU_CONTRASENA"
+
+// URL del Backend (producción o local)
+// Ejemplo Local:  "http://192.168.1.100:8000/api/data/iot/readings"
+// Ejemplo Remoto: "https://tudominio.com/api/data/iot/readings"
+const char* serverName = "https://TU_BACKEND_URL/api/data/iot/readings";
+
+// Token de autenticación (debe coincidir con SAFYRA_IOT_TOKEN en .env)
+const char* iotToken = "TU_IOT_TOKEN_SEGURO";
+
+// ==========================================================
+// CONFIGURACIÓN UART
+// ==========================================================
+#define RXp2 16
+#define TXp2 17
+
+void setup() {
+  Serial.begin(115200);
+  Serial2.begin(9600, SERIAL_8N1, RXp2, TXp2);
+  Serial.println("Receptor UART para Backend API Inicializado...");
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Conectando a WiFi...");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println("WiFi Conectado!");
+}
+
+void loop() {
+  if (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    return;
+  }
+
+  if (Serial2.available()) {
+    String incomingData = Serial2.readStringUntil('\n');
+    incomingData.trim();
+
+    if (incomingData.length() > 0) {
+      int primeraComa = incomingData.indexOf(',');
+      int segundaComa = incomingData.indexOf(',', primeraComa + 1);
+
+      if (primeraComa > 0 && segundaComa > primeraComa) {
+        String circuitoID = incomingData.substring(0, primeraComa);
+        String irmsStr = incomingData.substring(primeraComa + 1, segundaComa);
+        String potStr = incomingData.substring(segundaComa + 1);
+
+        float Irms = irmsStr.toFloat();
+        float potenciaAparente = potStr.toFloat();
+
+        Serial.print("[" + circuitoID + "] I: " + irmsStr + " A | P: " + potStr + " W");
+
+        HTTPClient http;
+        http.begin(serverName);
+        http.addHeader("Content-Type", "application/json");
+        http.addHeader("X-Safyra-Iot-Token", iotToken);
+
+        String jsonPayload = "{"
+          "\"sensor_id\":\"" + circuitoID + "\","
+          "\"irms\":" + String(Irms, 3) + ","
+          "\"potencia\":" + String(potenciaAparente, 3) + ","
+          "\"voltage\":220.0}";
+
+        unsigned long t0 = millis();
+        int httpResponseCode = http.POST(jsonPayload);
+        unsigned long t1 = millis();
+        unsigned long latenciaMs = t1 - t0;
+
+        if (httpResponseCode > 0) {
+          String response = http.getString();
+          Serial.print(" | HTTP: " + String(httpResponseCode));
+          Serial.println(" | Latencia: " + String(latenciaMs) + " ms");
+          Serial.println("DATA," + circuitoID + "," + String(Irms, 3) + ","
+            + String(httpResponseCode) + "," + String(latenciaMs));
+        } else {
+          Serial.println(" | Error: " + http.errorToString(httpResponseCode));
+        }
+
+        http.end();
+      }
+    }
+  }
+}

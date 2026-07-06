@@ -28,5 +28,7 @@ Safyra_Shield_Firebase.json
 integrations/
 docs/
 
-# Firmware de microcontroladores (contiene credenciales WiFi reales)
-code_microcontroladores/
+# Firmware de microcontroladores (solo se ignoran los .ino con credenciales reales)
+code_microcontroladores/*.ino
+!code_microcontroladores/*.ino.example
+!code_microcontroladores/README.md
