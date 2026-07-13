@@ -388,13 +388,29 @@
             body.acc-sz-xlarge .schedule-container {
                 zoom: 1.16 !important;
             }
-            body.acc-high-contrast .container,
-            body.acc-high-contrast .schedule-container {
-                filter: contrast(1.4) saturate(1.15) !important;
+            body.acc-contrast-1 .container,
+            body.acc-contrast-1 .schedule-container {
+                filter: contrast(1.35) saturate(1.15) brightness(1.05) !important;
             }
-            body.acc-colorblind .container,
-            body.acc-colorblind .schedule-container {
+            body.acc-contrast-2 .container,
+            body.acc-contrast-2 .schedule-container {
+                filter: contrast(1.65) saturate(1.25) brightness(1.20) !important;
+            }
+            body.acc-cb-deut .container,
+            body.acc-cb-deut .schedule-container {
                 filter: hue-rotate(50deg) saturate(1.3) !important;
+            }
+            body.acc-cb-prot .container,
+            body.acc-cb-prot .schedule-container {
+                filter: hue-rotate(120deg) saturate(1.3) !important;
+            }
+            body.acc-cb-trit .container,
+            body.acc-cb-trit .schedule-container {
+                filter: hue-rotate(290deg) saturate(1.3) !important;
+            }
+            body.acc-cb-mono .container,
+            body.acc-cb-mono .schedule-container {
+                filter: grayscale(1.0) contrast(1.35) brightness(1.10) !important;
             }
             
             /* SVG Big Cursor */
@@ -452,7 +468,8 @@
                         <span class="safyra-acc-opt-icon">◑</span>
                         <span class="safyra-acc-opt-lbl">Contraste +</span>
                         <div class="safyra-acc-indicator-bar">
-                            <div class="safyra-acc-indicator-dot" id="dot-contrast"></div>
+                            <div class="safyra-acc-indicator-dot" id="dot-contrast-1"></div>
+                            <div class="safyra-acc-indicator-dot" id="dot-contrast-2"></div>
                         </div>
                     </button>
                     <button class="safyra-acc-btn-opt" id="opt-highlight-links">
@@ -485,9 +502,12 @@
                     </button>
                     <button class="safyra-acc-btn-opt" id="opt-colorblind" style="grid-column: span 2;">
                         <span class="safyra-acc-opt-icon">🎨</span>
-                        <span class="safyra-acc-opt-lbl">Modo Daltonismo</span>
+                        <span class="safyra-acc-opt-lbl" id="lbl-colorblind">Modo Daltonismo</span>
                         <div class="safyra-acc-indicator-bar">
-                            <div class="safyra-acc-indicator-dot" id="dot-colorblind"></div>
+                            <div class="safyra-acc-indicator-dot" id="dot-cb-1"></div>
+                            <div class="safyra-acc-indicator-dot" id="dot-cb-2"></div>
+                            <div class="safyra-acc-indicator-dot" id="dot-cb-3"></div>
+                            <div class="safyra-acc-indicator-dot" id="dot-cb-4"></div>
                         </div>
                     </button>
                 </div>
@@ -501,20 +521,20 @@
 
         // Load settings from storage
         let textSize = localStorage.getItem("safyraAccSize") || "normal";
-        let isContrast = localStorage.getItem("safyraAccContrast") === "true";
+        let contrastLevel = Number(localStorage.getItem("safyraAccContrastLevel")) || 0;
         let isLinks = localStorage.getItem("safyraAccLinks") === "true";
         let isDyslexic = localStorage.getItem("safyraAccDyslexic") === "true";
         let isCursor = localStorage.getItem("safyraAccCursor") === "true";
         let isSpacing = localStorage.getItem("safyraAccSpacing") === "true";
-        let isColorblind = localStorage.getItem("safyraAccColorblind") === "true";
+        let colorblindMode = localStorage.getItem("safyraAccColorblindMode") || "normal";
 
         applyTextSize(textSize);
-        applyContrast(isContrast);
+        applyContrast(contrastLevel);
         applyLinks(isLinks);
         applyDyslexic(isDyslexic);
         applyCursor(isCursor);
         applySpacing(isSpacing);
-        applyColorblind(isColorblind);
+        applyColorblind(colorblindMode);
 
         // Sidebar slide events
         trigger.addEventListener("click", (e) => {
@@ -539,12 +559,20 @@
             else if (textSize === "large") applyTextSize("xlarge");
             else applyTextSize("normal");
         });
-        panel.querySelector("#opt-contrast").addEventListener("click", () => applyContrast(!isContrast));
+        panel.querySelector("#opt-contrast").addEventListener("click", () => {
+            let next = (contrastLevel + 1) % 3;
+            applyContrast(next);
+        });
         panel.querySelector("#opt-highlight-links").addEventListener("click", () => applyLinks(!isLinks));
         panel.querySelector("#opt-dyslexic").addEventListener("click", () => applyDyslexic(!isDyslexic));
         panel.querySelector("#opt-cursor").addEventListener("click", () => applyCursor(!isCursor));
         panel.querySelector("#opt-spacing").addEventListener("click", () => applySpacing(!isSpacing));
-        panel.querySelector("#opt-colorblind").addEventListener("click", () => applyColorblind(!isColorblind));
+        panel.querySelector("#opt-colorblind").addEventListener("click", () => {
+            const modes = ["normal", "deut", "prot", "trit", "mono"];
+            let idx = modes.indexOf(colorblindMode);
+            let next = modes[(idx + 1) % modes.length];
+            applyColorblind(next);
+        });
         panel.querySelector(".safyra-acc-reset-btn").addEventListener("click", resetAll);
 
         // Actions Implementations
@@ -572,20 +600,28 @@
             localStorage.setItem("safyraAccSize", size);
         }
 
-        function applyContrast(enable) {
-            isContrast = enable;
+        function applyContrast(level) {
+            contrastLevel = level;
+            bodyEl.classList.remove("acc-contrast-1", "acc-contrast-2");
             const btn = panel.querySelector("#opt-contrast");
-            const dot = panel.querySelector("#dot-contrast");
-            if (enable) {
-                bodyEl.classList.add("acc-high-contrast");
+            const dot1 = panel.querySelector("#dot-contrast-1");
+            const dot2 = panel.querySelector("#dot-contrast-2");
+            
+            btn.classList.remove("active");
+            dot1.classList.remove("active");
+            dot2.classList.remove("active");
+
+            if (level === 1) {
+                bodyEl.classList.add("acc-contrast-1");
                 btn.classList.add("active");
-                dot.classList.add("active");
-            } else {
-                bodyEl.classList.remove("acc-high-contrast");
-                btn.classList.remove("active");
-                dot.classList.remove("active");
+                dot1.classList.add("active");
+            } else if (level === 2) {
+                bodyEl.classList.add("acc-contrast-2");
+                btn.classList.add("active");
+                dot1.classList.add("active");
+                dot2.classList.add("active");
             }
-            localStorage.setItem("safyraAccContrast", enable ? "true" : "false");
+            localStorage.setItem("safyraAccContrastLevel", level);
         }
 
         function applyLinks(enable) {
@@ -652,30 +688,61 @@
             localStorage.setItem("safyraAccSpacing", enable ? "true" : "false");
         }
 
-        function applyColorblind(enable) {
-            isColorblind = enable;
+        function applyColorblind(mode) {
+            colorblindMode = mode;
+            bodyEl.classList.remove("acc-cb-deut", "acc-cb-prot", "acc-cb-trit", "acc-cb-mono");
             const btn = panel.querySelector("#opt-colorblind");
-            const dot = panel.querySelector("#dot-colorblind");
-            if (enable) {
-                bodyEl.classList.add("acc-colorblind");
+            const lbl = panel.querySelector("#lbl-colorblind");
+            const dot1 = panel.querySelector("#dot-cb-1");
+            const dot2 = panel.querySelector("#dot-cb-2");
+            const dot3 = panel.querySelector("#dot-cb-3");
+            const dot4 = panel.querySelector("#dot-cb-4");
+            
+            btn.classList.remove("active");
+            dot1.classList.remove("active");
+            dot2.classList.remove("active");
+            dot3.classList.remove("active");
+            dot4.classList.remove("active");
+            lbl.textContent = "Modo Daltonismo";
+
+            if (mode === "deut") {
+                bodyEl.classList.add("acc-cb-deut");
                 btn.classList.add("active");
-                dot.classList.add("active");
-            } else {
-                bodyEl.classList.remove("acc-colorblind");
-                btn.classList.remove("active");
-                dot.classList.remove("active");
+                dot1.classList.add("active");
+                lbl.textContent = "Daltonismo (Deuter.)";
+            } else if (mode === "prot") {
+                bodyEl.classList.add("acc-cb-prot");
+                btn.classList.add("active");
+                dot1.classList.add("active");
+                dot2.classList.add("active");
+                lbl.textContent = "Daltonismo (Protan.)";
+            } else if (mode === "trit") {
+                bodyEl.classList.add("acc-cb-trit");
+                btn.classList.add("active");
+                dot1.classList.add("active");
+                dot2.classList.add("active");
+                dot3.classList.add("active");
+                lbl.textContent = "Daltonismo (Tritan.)";
+            } else if (mode === "mono") {
+                bodyEl.classList.add("acc-cb-mono");
+                btn.classList.add("active");
+                dot1.classList.add("active");
+                dot2.classList.add("active");
+                dot3.classList.add("active");
+                dot4.classList.add("active");
+                lbl.textContent = "Daltonismo (Monocr.)";
             }
-            localStorage.setItem("safyraAccColorblind", enable ? "true" : "false");
+            localStorage.setItem("safyraAccColorblindMode", mode);
         }
 
         function resetAll() {
             applyTextSize("normal");
-            applyContrast(false);
+            applyContrast(0);
             applyLinks(false);
             applyDyslexic(false);
             applyCursor(false);
             applySpacing(false);
-            applyColorblind(false);
+            applyColorblind("normal");
         }
     }
 
