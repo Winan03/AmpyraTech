@@ -28,7 +28,10 @@ def _post_alert_notification(payload: Mapping[str, Any]) -> dict[str, Any]:
     webhook_url = os.getenv("N8N_ALERT_WEBHOOK_URL", "").strip()
     webhook_token = os.getenv("N8N_ALERT_WEBHOOK_TOKEN", "").strip()
 
+    print(f"[WEBHOOK] Intentando enviar alerta a: {webhook_url}")
+
     if not _notifications_enabled() or not webhook_url:
+        print("[WEBHOOK] Envío cancelado: Notificaciones deshabilitadas o URL vacía.")
         return {"sent": False, "reason": "notifications_disabled"}
 
     headers = {
@@ -43,6 +46,9 @@ def _post_alert_notification(payload: Mapping[str, Any]) -> dict[str, Any]:
             headers=headers,
             timeout=_request_timeout_seconds(),
         )
+        print(f"[WEBHOOK] Respuesta de n8n: Status={response.status_code}, Ok={response.ok}")
+        if not response.ok:
+            print(f"[WEBHOOK] Detalle de error: {response.text[:200]}")
         return {
             "sent": response.ok,
             "status_code": response.status_code,
@@ -50,7 +56,9 @@ def _post_alert_notification(payload: Mapping[str, Any]) -> dict[str, Any]:
             "reason": "" if response.ok else response.reason,
         }
     except requests.RequestException as exc:
+        print(f"[WEBHOOK] EXCEPCIÓN al enviar POST: {str(exc)}")
         return {"sent": False, "reason": str(exc)}
+
 
 
 def send_alert_notification(payload: Mapping[str, Any]) -> dict[str, Any]:
