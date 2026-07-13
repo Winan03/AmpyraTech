@@ -313,26 +313,22 @@
                 font-weight: 700;
             }
             
-            /* Root accessibility overrides - Using CSS Zoom for perfect proportional scaling of the workspace only */
-            body.acc-sz-large .workspace {
+            /* Root accessibility overrides - Using CSS Zoom on containers (bypasses flexbox zoom bugs) */
+            body.acc-sz-large .container,
+            body.acc-sz-large .schedule-container {
                 zoom: 1.08 !important;
             }
-            body.acc-sz-xlarge .workspace {
+            body.acc-sz-xlarge .container,
+            body.acc-sz-xlarge .schedule-container {
                 zoom: 1.16 !important;
             }
-            body.acc-high-contrast {
-                filter: contrast(1.4) saturate(1.1) !important;
+            body.acc-high-contrast .container,
+            body.acc-high-contrast .schedule-container {
+                filter: contrast(1.4) saturate(1.15) !important;
             }
-            /* Target ONLY status indicators for Colorblind mode (preserves sidebar & brand colors!) */
-            body.acc-colorblind .sensor-card,
-            body.acc-colorblind .room-status-badge,
-            body.acc-colorblind .device-info-box,
-            body.acc-colorblind .progress-bar,
-            body.acc-colorblind .progress-fill,
-            body.acc-colorblind .overload-alert,
-            body.acc-colorblind .toast-alert,
-            body.acc-colorblind .badge,
-            body.acc-colorblind [class*="status-"] {
+            /* Target only workspace content for Colorblind mode (preserves sidebar & brand colors!) */
+            body.acc-colorblind .container,
+            body.acc-colorblind .schedule-container {
                 filter: hue-rotate(50deg) saturate(1.3) !important;
             }
         `;
