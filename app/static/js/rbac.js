@@ -217,24 +217,17 @@
     }
 
     // ==========================================================
-    // FLOATING ACCESSIBILITY WIDGET (WCAG Compliance)
+    // FLOATING ACCESSIBILITY PANEL (UserWay High-Fidelity Clone)
     // ==========================================================
     function initAccessibility() {
         // 1. Inject Styles
         const style = document.createElement("style");
         style.textContent = `
-            .safyra-acc-widget {
+            .safyra-acc-widget-trigger {
                 position: fixed;
                 bottom: 24px;
                 right: 24px;
-                z-index: 99999;
-                display: flex;
-                flex-direction: column-reverse;
-                align-items: flex-end;
-                gap: 10px;
-                font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            }
-            .safyra-acc-btn {
+                z-index: 999998;
                 width: 50px;
                 height: 50px;
                 border-radius: 50%;
@@ -249,71 +242,144 @@
                 font-size: 24px;
                 transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             }
-            .safyra-acc-btn:hover {
+            .safyra-acc-widget-trigger:hover {
                 transform: scale(1.15) rotate(15deg);
                 box-shadow: 0 8px 24px rgba(0, 245, 255, 0.6);
             }
-            .safyra-acc-menu {
-                display: none;
-                flex-direction: column;
-                gap: 8px;
-                background: rgba(10, 14, 39, 0.96);
-                border: 1px solid rgba(0, 245, 255, 0.3);
-                border-radius: 14px;
-                padding: 14px;
-                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
-                backdrop-filter: blur(10px);
-                width: 210px;
-                animation: slideUpAcc 0.25s ease-out;
-            }
-            @keyframes slideUpAcc {
-                from { transform: translateY(15px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-            .safyra-acc-menu.active {
+            .safyra-acc-panel {
+                position: fixed;
+                top: 0;
+                right: -360px;
+                width: 340px;
+                height: 100vh;
+                background: #0d122e;
+                border-left: 2px solid #00f5ff;
+                z-index: 999999;
+                box-shadow: -10px 0 40px rgba(0, 0, 0, 0.8);
                 display: flex;
+                flex-direction: column;
+                transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                color: #ffffff;
+                font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             }
-            .safyra-acc-title {
-                color: #00f5ff;
-                font-size: 13px;
+            .safyra-acc-panel.active {
+                right: 0;
+            }
+            .safyra-acc-hdr {
+                background: linear-gradient(135deg, #0b153b, #04081c);
+                padding: 18px 20px;
+                border-bottom: 1px solid rgba(0, 245, 255, 0.2);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .safyra-acc-hdr h3 {
+                margin: 0;
+                font-size: 15px;
                 font-weight: 700;
-                margin-bottom: 6px;
+                color: #00f5ff;
                 text-transform: uppercase;
                 letter-spacing: 0.8px;
-                border-bottom: 1px solid rgba(0, 245, 255, 0.2);
-                padding-bottom: 4px;
             }
-            .safyra-acc-item {
-                padding: 9px 12px;
-                border-radius: 8px;
-                background: rgba(255, 255, 255, 0.05);
+            .safyra-acc-close {
+                background: none;
+                border: none;
                 color: #ffffff;
-                font-size: 13px;
-                font-weight: 600;
+                font-size: 22px;
                 cursor: pointer;
-                border: 1px solid transparent;
-                text-align: left;
-                transition: all 0.2s ease;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
+                transition: color 0.2s;
+                line-height: 1;
             }
-            .safyra-acc-item:hover {
-                background: rgba(0, 245, 255, 0.15);
+            .safyra-acc-close:hover {
+                color: #ff4d4d;
+            }
+            .safyra-acc-body {
+                flex: 1;
+                overflow-y: auto;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+            .safyra-acc-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .safyra-acc-btn-opt {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(0, 245, 255, 0.15);
+                border-radius: 12px;
+                padding: 16px 8px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                color: #ffffff;
+                text-align: center;
+                user-select: none;
+            }
+            .safyra-acc-btn-opt:hover {
+                background: rgba(0, 245, 255, 0.1);
                 border-color: rgba(0, 245, 255, 0.4);
                 color: #00f5ff;
             }
-            .safyra-acc-item.selected {
-                background: rgba(0, 245, 255, 0.25);
+            .safyra-acc-btn-opt.active {
+                background: rgba(0, 245, 255, 0.18);
                 border-color: #00f5ff;
                 color: #00f5ff;
             }
-            .safyra-acc-item.selected::after {
-                content: "✓";
-                font-weight: 700;
+            .safyra-acc-opt-icon {
+                font-size: 24px;
+                line-height: 1;
+            }
+            .safyra-acc-opt-lbl {
+                font-size: 11px;
+                font-weight: 600;
+                line-height: 1.3;
             }
             
-            /* Root accessibility overrides - Using CSS Zoom on containers (bypasses flexbox zoom bugs) */
+            /* UserWay active indicators */
+            .safyra-acc-indicator-bar {
+                display: flex;
+                gap: 4px;
+                margin-top: 4px;
+            }
+            .safyra-acc-indicator-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.25);
+            }
+            .safyra-acc-indicator-dot.active {
+                background: #00f5ff;
+                box-shadow: 0 0 6px #00f5ff;
+            }
+            
+            .safyra-acc-reset-btn {
+                background: rgba(255, 77, 77, 0.1);
+                border: 1px solid rgba(255, 77, 77, 0.3);
+                color: #ff4d4d;
+                border-radius: 10px;
+                padding: 12px;
+                font-size: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s;
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+                margin-top: 15px;
+                text-align: center;
+            }
+            .safyra-acc-reset-btn:hover {
+                background: #ff4d4d;
+                color: #ffffff;
+                box-shadow: 0 4px 12px rgba(255, 77, 77, 0.3);
+            }
+            
+            /* Root accessibility overrides - Scoped Zoom */
             body.acc-sz-large .container,
             body.acc-sz-large .schedule-container {
                 zoom: 1.08 !important;
@@ -326,104 +392,290 @@
             body.acc-high-contrast .schedule-container {
                 filter: contrast(1.4) saturate(1.15) !important;
             }
-            /* Target only workspace content for Colorblind mode (preserves sidebar & brand colors!) */
             body.acc-colorblind .container,
             body.acc-colorblind .schedule-container {
                 filter: hue-rotate(50deg) saturate(1.3) !important;
             }
+            
+            /* SVG Big Cursor */
+            body.acc-large-cursor, body.acc-large-cursor * {
+                cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="white" stroke="black" stroke-width="2"><path d="M4 4l12 12h-5l5 5-2 2-5-5v5z"/></svg>'), auto !important;
+            }
+            
+            /* Custom Text spacing */
+            body.acc-text-spacing *, body.acc-text-spacing p, body.acc-text-spacing span, body.acc-text-spacing div {
+                letter-spacing: 0.06em !important;
+                word-spacing: 0.12em !important;
+            }
+            
+            /* Dyslexic friendly font (Comic Sans MS works perfectly on Windows) */
+            body.acc-dyslexic *, body.acc-dyslexic p, body.acc-dyslexic span, body.acc-dyslexic div, body.acc-dyslexic h1, body.acc-dyslexic h2, body.acc-dyslexic h3, body.acc-dyslexic h4 {
+                font-family: "Comic Sans MS", "Comic Sans", cursive, sans-serif !important;
+            }
+            
+            /* Highlight links style */
+            body.acc-highlight-links a {
+                background-color: #ffff00 !important;
+                color: #000000 !important;
+                outline: 2px solid #ff4d4d !important;
+                text-decoration: underline !important;
+                font-weight: bold !important;
+            }
         `;
         document.head.appendChild(style);
 
-        // 2. Create Widget Markup
-        const widget = document.createElement("div");
-        widget.className = "safyra-acc-widget";
-        widget.innerHTML = `
-            <button class="safyra-acc-btn" title="Opciones de Accesibilidad Visual" aria-label="Opciones de Accesibilidad Visual">♿</button>
-            <div class="safyra-acc-menu">
-                <div class="safyra-acc-title">Tamaño de Fuente</div>
-                <button class="safyra-acc-item" id="acc-sz-normal">Texto Normal</button>
-                <button class="safyra-acc-item" id="acc-sz-large">Texto Grande (A+)</button>
-                <button class="safyra-acc-item" id="acc-sz-xlarge">Texto Extra (A++)</button>
-                
-                <div class="safyra-acc-title" style="margin-top: 10px;">Filtros Visuales</div>
-                <button class="safyra-acc-item" id="acc-toggle-contrast">Alto Contraste</button>
-                <button class="safyra-acc-item" id="acc-toggle-colorblind">Modo Daltonismo</button>
+        // 2. Create Panel & Trigger Button Markup
+        const trigger = document.createElement("button");
+        trigger.className = "safyra-acc-widget-trigger";
+        trigger.title = "Menú de Accesibilidad";
+        trigger.innerHTML = "♿";
+        document.body.appendChild(trigger);
+
+        const panel = document.createElement("div");
+        panel.className = "safyra-acc-panel";
+        panel.innerHTML = `
+            <div class="safyra-acc-hdr">
+                <h3>Menú de Accesibilidad</h3>
+                <button class="safyra-acc-close" aria-label="Cerrar">×</button>
+            </div>
+            <div class="safyra-acc-body">
+                <div class="safyra-acc-grid">
+                    <button class="safyra-acc-btn-opt" id="opt-text-size">
+                        <span class="safyra-acc-opt-icon">Tт</span>
+                        <span class="safyra-acc-opt-lbl">Agrandar Texto</span>
+                        <div class="safyra-acc-indicator-bar" id="dots-text-size">
+                            <div class="safyra-acc-indicator-dot" id="dot-sz-1"></div>
+                            <div class="safyra-acc-indicator-dot" id="dot-sz-2"></div>
+                        </div>
+                    </button>
+                    <button class="safyra-acc-btn-opt" id="opt-contrast">
+                        <span class="safyra-acc-opt-icon">◑</span>
+                        <span class="safyra-acc-opt-lbl">Contraste +</span>
+                        <div class="safyra-acc-indicator-bar">
+                            <div class="safyra-acc-indicator-dot" id="dot-contrast"></div>
+                        </div>
+                    </button>
+                    <button class="safyra-acc-btn-opt" id="opt-highlight-links">
+                        <span class="safyra-acc-opt-icon">🔗</span>
+                        <span class="safyra-acc-opt-lbl">Resaltar Enlaces</span>
+                        <div class="safyra-acc-indicator-bar">
+                            <div class="safyra-acc-indicator-dot" id="dot-links"></div>
+                        </div>
+                    </button>
+                    <button class="safyra-acc-btn-opt" id="opt-dyslexic">
+                        <span class="safyra-acc-opt-icon">Ab</span>
+                        <span class="safyra-acc-opt-lbl">Apto Dislexia</span>
+                        <div class="safyra-acc-indicator-bar">
+                            <div class="safyra-acc-indicator-dot" id="dot-dyslexic"></div>
+                        </div>
+                    </button>
+                    <button class="safyra-acc-btn-opt" id="opt-cursor">
+                        <span class="safyra-acc-opt-icon">⬈</span>
+                        <span class="safyra-acc-opt-lbl">Cursor Grande</span>
+                        <div class="safyra-acc-indicator-bar">
+                            <div class="safyra-acc-indicator-dot" id="dot-cursor"></div>
+                        </div>
+                    </button>
+                    <button class="safyra-acc-btn-opt" id="opt-spacing">
+                        <span class="safyra-acc-opt-icon">↔</span>
+                        <span class="safyra-acc-opt-lbl">Espaciado Texto</span>
+                        <div class="safyra-acc-indicator-bar">
+                            <div class="safyra-acc-indicator-dot" id="dot-spacing"></div>
+                        </div>
+                    </button>
+                    <button class="safyra-acc-btn-opt" id="opt-colorblind" style="grid-column: span 2;">
+                        <span class="safyra-acc-opt-icon">🎨</span>
+                        <span class="safyra-acc-opt-lbl">Modo Daltonismo</span>
+                        <div class="safyra-acc-indicator-bar">
+                            <div class="safyra-acc-indicator-dot" id="dot-colorblind"></div>
+                        </div>
+                    </button>
+                </div>
+                <button class="safyra-acc-reset-btn">Restablecer Todo</button>
             </div>
         `;
-        document.body.appendChild(widget);
+        document.body.appendChild(panel);
 
         const bodyEl = document.body;
-        const mainBtn = widget.querySelector(".safyra-acc-btn");
-        const menu = widget.querySelector(".safyra-acc-menu");
+        const closeBtn = panel.querySelector(".safyra-acc-close");
 
         // Load settings from storage
-        let currentSize = localStorage.getItem("safyraAccSize") || "normal";
+        let textSize = localStorage.getItem("safyraAccSize") || "normal";
         let isContrast = localStorage.getItem("safyraAccContrast") === "true";
+        let isLinks = localStorage.getItem("safyraAccLinks") === "true";
+        let isDyslexic = localStorage.getItem("safyraAccDyslexic") === "true";
+        let isCursor = localStorage.getItem("safyraAccCursor") === "true";
+        let isSpacing = localStorage.getItem("safyraAccSpacing") === "true";
         let isColorblind = localStorage.getItem("safyraAccColorblind") === "true";
 
-        applySize(currentSize);
+        applyTextSize(textSize);
         applyContrast(isContrast);
+        applyLinks(isLinks);
+        applyDyslexic(isDyslexic);
+        applyCursor(isCursor);
+        applySpacing(isSpacing);
         applyColorblind(isColorblind);
 
-        // UI Event Listeners
-        mainBtn.addEventListener("click", (e) => {
+        // Sidebar slide events
+        trigger.addEventListener("click", (e) => {
             e.stopPropagation();
-            menu.classList.toggle("active");
+            panel.classList.toggle("active");
         });
-        document.addEventListener("click", () => {
-            menu.classList.remove("active");
+        closeBtn.addEventListener("click", () => {
+            panel.classList.remove("active");
         });
-        menu.addEventListener("click", (e) => {
+        document.addEventListener("click", (e) => {
+            if (!panel.contains(e.target) && e.target !== trigger) {
+                panel.classList.remove("active");
+            }
+        });
+        panel.addEventListener("click", (e) => {
             e.stopPropagation();
         });
 
-        widget.querySelector("#acc-sz-normal").addEventListener("click", () => applySize("normal"));
-        widget.querySelector("#acc-sz-large").addEventListener("click", () => applySize("large"));
-        widget.querySelector("#acc-sz-xlarge").addEventListener("click", () => applySize("xlarge"));
-        widget.querySelector("#acc-toggle-contrast").addEventListener("click", () => applyContrast(!isContrast));
-        widget.querySelector("#acc-toggle-colorblind").addEventListener("click", () => applyColorblind(!isColorblind));
+        // Trigger Click Events
+        panel.querySelector("#opt-text-size").addEventListener("click", () => {
+            if (textSize === "normal") applyTextSize("large");
+            else if (textSize === "large") applyTextSize("xlarge");
+            else applyTextSize("normal");
+        });
+        panel.querySelector("#opt-contrast").addEventListener("click", () => applyContrast(!isContrast));
+        panel.querySelector("#opt-highlight-links").addEventListener("click", () => applyLinks(!isLinks));
+        panel.querySelector("#opt-dyslexic").addEventListener("click", () => applyDyslexic(!isDyslexic));
+        panel.querySelector("#opt-cursor").addEventListener("click", () => applyCursor(!isCursor));
+        panel.querySelector("#opt-spacing").addEventListener("click", () => applySpacing(!isSpacing));
+        panel.querySelector("#opt-colorblind").addEventListener("click", () => applyColorblind(!isColorblind));
+        panel.querySelector(".safyra-acc-reset-btn").addEventListener("click", resetAll);
 
-        function applySize(size) {
-            currentSize = size;
+        // Actions Implementations
+        function applyTextSize(size) {
+            textSize = size;
             bodyEl.classList.remove("acc-sz-large", "acc-sz-xlarge");
-            widget.querySelectorAll("[id^='acc-sz-']").forEach(b => b.classList.remove("selected"));
+            const btn = panel.querySelector("#opt-text-size");
+            const dot1 = panel.querySelector("#dot-sz-1");
+            const dot2 = panel.querySelector("#dot-sz-2");
             
+            btn.classList.remove("active");
+            dot1.classList.remove("active");
+            dot2.classList.remove("active");
+
             if (size === "large") {
                 bodyEl.classList.add("acc-sz-large");
-                widget.querySelector("#acc-sz-large").classList.add("selected");
+                btn.classList.add("active");
+                dot1.classList.add("active");
             } else if (size === "xlarge") {
                 bodyEl.classList.add("acc-sz-xlarge");
-                widget.querySelector("#acc-sz-xlarge").classList.add("selected");
-            } else {
-                widget.querySelector("#acc-sz-normal").classList.add("selected");
+                btn.classList.add("active");
+                dot1.classList.add("active");
+                dot2.classList.add("active");
             }
             localStorage.setItem("safyraAccSize", size);
         }
 
         function applyContrast(enable) {
             isContrast = enable;
-            const btn = widget.querySelector("#acc-toggle-contrast");
+            const btn = panel.querySelector("#opt-contrast");
+            const dot = panel.querySelector("#dot-contrast");
             if (enable) {
                 bodyEl.classList.add("acc-high-contrast");
-                btn.classList.add("selected");
+                btn.classList.add("active");
+                dot.classList.add("active");
             } else {
                 bodyEl.classList.remove("acc-high-contrast");
-                btn.classList.remove("selected");
+                btn.classList.remove("active");
+                dot.classList.remove("active");
             }
             localStorage.setItem("safyraAccContrast", enable ? "true" : "false");
         }
 
+        function applyLinks(enable) {
+            isLinks = enable;
+            const btn = panel.querySelector("#opt-highlight-links");
+            const dot = panel.querySelector("#dot-links");
+            if (enable) {
+                bodyEl.classList.add("acc-highlight-links");
+                btn.classList.add("active");
+                dot.classList.add("active");
+            } else {
+                bodyEl.classList.remove("acc-highlight-links");
+                btn.classList.remove("active");
+                dot.classList.remove("active");
+            }
+            localStorage.setItem("safyraAccLinks", enable ? "true" : "false");
+        }
+
+        function applyDyslexic(enable) {
+            isDyslexic = enable;
+            const btn = panel.querySelector("#opt-dyslexic");
+            const dot = panel.querySelector("#dot-dyslexic");
+            if (enable) {
+                bodyEl.classList.add("acc-dyslexic");
+                btn.classList.add("active");
+                dot.classList.add("active");
+            } else {
+                bodyEl.classList.remove("acc-dyslexic");
+                btn.classList.remove("active");
+                dot.classList.remove("active");
+            }
+            localStorage.setItem("safyraAccDyslexic", enable ? "true" : "false");
+        }
+
+        function applyCursor(enable) {
+            isCursor = enable;
+            const btn = panel.querySelector("#opt-cursor");
+            const dot = panel.querySelector("#dot-cursor");
+            if (enable) {
+                bodyEl.classList.add("acc-large-cursor");
+                btn.classList.add("active");
+                dot.classList.add("active");
+            } else {
+                bodyEl.classList.remove("acc-large-cursor");
+                btn.classList.remove("active");
+                dot.classList.remove("active");
+            }
+            localStorage.setItem("safyraAccCursor", enable ? "true" : "false");
+        }
+
+        function applySpacing(enable) {
+            isSpacing = enable;
+            const btn = panel.querySelector("#opt-spacing");
+            const dot = panel.querySelector("#dot-spacing");
+            if (enable) {
+                bodyEl.classList.add("acc-text-spacing");
+                btn.classList.add("active");
+                dot.classList.add("active");
+            } else {
+                bodyEl.classList.remove("acc-text-spacing");
+                btn.classList.remove("active");
+                dot.classList.remove("active");
+            }
+            localStorage.setItem("safyraAccSpacing", enable ? "true" : "false");
+        }
+
         function applyColorblind(enable) {
             isColorblind = enable;
-            const btn = widget.querySelector("#acc-toggle-colorblind");
+            const btn = panel.querySelector("#opt-colorblind");
+            const dot = panel.querySelector("#dot-colorblind");
             if (enable) {
                 bodyEl.classList.add("acc-colorblind");
-                btn.classList.add("selected");
+                btn.classList.add("active");
+                dot.classList.add("active");
             } else {
                 bodyEl.classList.remove("acc-colorblind");
-                btn.classList.remove("selected");
+                btn.classList.remove("active");
+                dot.classList.remove("active");
             }
             localStorage.setItem("safyraAccColorblind", enable ? "true" : "false");
+        }
+
+        function resetAll() {
+            applyTextSize("normal");
+            applyContrast(false);
+            applyLinks(false);
+            applyDyslexic(false);
+            applyCursor(false);
+            applySpacing(false);
+            applyColorblind(false);
         }
     }
 
