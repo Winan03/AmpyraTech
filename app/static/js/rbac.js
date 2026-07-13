@@ -313,12 +313,12 @@
                 font-weight: 700;
             }
             
-            /* Root accessibility overrides - Using CSS Zoom for perfect proportional scaling */
-            body.acc-sz-large {
-                zoom: 1.10 !important;
+            /* Root accessibility overrides - Using CSS Zoom for perfect proportional scaling of the workspace only */
+            body.acc-sz-large .workspace {
+                zoom: 1.08 !important;
             }
-            body.acc-sz-xlarge {
-                zoom: 1.20 !important;
+            body.acc-sz-xlarge .workspace {
+                zoom: 1.16 !important;
             }
             body.acc-high-contrast {
                 filter: contrast(1.4) saturate(1.1) !important;
