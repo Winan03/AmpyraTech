@@ -226,11 +226,11 @@
             .safyra-acc-widget {
                 position: fixed;
                 bottom: 24px;
-                left: 24px;
+                right: 24px;
                 z-index: 99999;
                 display: flex;
                 flex-direction: column-reverse;
-                align-items: flex-start;
+                align-items: flex-end;
                 gap: 10px;
                 font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             }
@@ -313,18 +313,14 @@
                 font-weight: 700;
             }
             
-            /* Root accessibility overrides */
+            /* Root accessibility overrides - Refined to protect layout elements */
             body.acc-sz-large p, body.acc-sz-large span, body.acc-sz-large a, 
-            body.acc-sz-large button, body.acc-sz-large td, body.acc-sz-large th, 
-            body.acc-sz-large h1, body.acc-sz-large h2, body.acc-sz-large h3, 
-            body.acc-sz-large h4, body.acc-sz-large input, body.acc-sz-large label {
-                font-size: 1.12em !important;
+            body.acc-sz-large td, body.acc-sz-large th, body.acc-sz-large label {
+                font-size: 1.08rem !important;
             }
             body.acc-sz-xlarge p, body.acc-sz-xlarge span, body.acc-sz-xlarge a, 
-            body.acc-sz-xlarge button, body.acc-sz-xlarge td, body.acc-sz-xlarge th, 
-            body.acc-sz-xlarge h1, body.acc-sz-xlarge h2, body.acc-sz-xlarge h3, 
-            body.acc-sz-xlarge h4, body.acc-sz-xlarge input, body.acc-sz-xlarge label {
-                font-size: 1.25em !important;
+            body.acc-sz-xlarge td, body.acc-sz-xlarge th, body.acc-sz-xlarge label {
+                font-size: 1.18rem !important;
             }
             body.acc-high-contrast {
                 filter: contrast(1.4) saturate(1.1) !important;
