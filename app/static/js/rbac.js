@@ -313,20 +313,26 @@
                 font-weight: 700;
             }
             
-            /* Root accessibility overrides - Refined to protect layout elements */
-            body.acc-sz-large p, body.acc-sz-large span, body.acc-sz-large a, 
-            body.acc-sz-large td, body.acc-sz-large th, body.acc-sz-large label {
-                font-size: 1.08rem !important;
+            /* Root accessibility overrides - Using CSS Zoom for perfect proportional scaling */
+            body.acc-sz-large {
+                zoom: 1.10 !important;
             }
-            body.acc-sz-xlarge p, body.acc-sz-xlarge span, body.acc-sz-xlarge a, 
-            body.acc-sz-xlarge td, body.acc-sz-xlarge th, body.acc-sz-xlarge label {
-                font-size: 1.18rem !important;
+            body.acc-sz-xlarge {
+                zoom: 1.20 !important;
             }
             body.acc-high-contrast {
                 filter: contrast(1.4) saturate(1.1) !important;
             }
-            body.acc-colorblind {
-                /* Shifts green towards blue, and red towards orange/yellow (Deuteranopia safe) */
+            /* Target ONLY status indicators for Colorblind mode (preserves sidebar & brand colors!) */
+            body.acc-colorblind .sensor-card,
+            body.acc-colorblind .room-status-badge,
+            body.acc-colorblind .device-info-box,
+            body.acc-colorblind .progress-bar,
+            body.acc-colorblind .progress-fill,
+            body.acc-colorblind .overload-alert,
+            body.acc-colorblind .toast-alert,
+            body.acc-colorblind .badge,
+            body.acc-colorblind [class*="status-"] {
                 filter: hue-rotate(50deg) saturate(1.3) !important;
             }
         `;
